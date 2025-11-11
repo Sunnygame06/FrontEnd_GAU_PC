@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Protección Civil</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-content">
+            <div class="login-header">
+                <div class="header-with-logo">
+                    <div class="logo-container">
+                        <img src="https://www.proteccioncivil.gob.sv/wp-content/uploads/2009/06/procivil-png-peque-1.png" alt="Protección Civil">
+                    </div>
+                    <h1>PROTECCIÓN CIVIL</h1>
+                </div>
+                <p>Autenticarse para iniciar sesión</p>
+            </div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="email" class="form-control" placeholder="Ingrese su email" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password" class="form-control" placeholder="Ingrese su contraseña" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn">Acceder</button>
+                
+                <div class="forgot-password">
+                    <a href="#" id="forgotPasswordLink">Olvidé mi contraseña</a>
+                </div>
+            </form>
+            
+            <div class="recovery-options" id="recoveryOptions">
+                <h3>Métodos de recuperación de cuenta</h3>
+                <div class="recovery-methods">
+                    <div class="recovery-method" id="emailRecovery">
+                        <i class="fas fa-envelope"></i>
+                        <span>Email</span>
+                    </div>
+                    <div class="recovery-method" id="smsRecovery">
+                        <i class="fas fa-mobile-alt"></i>
+                        <span>SMS</span>
+                    </div>
+                    <div class="recovery-method" id="securityQuestions">
+                        <i class="fas fa-question-circle"></i>
+                        <span>Preguntas de seguridad</span>
+                    </div>
+                    <div class="recovery-method" id="authenticatorApp">
+                        <i class="fas fa-key"></i>
+                        <span>App de autenticación</span>
+                    </div>
+                </div>
+                
+                <div class="back-to-login">
+                    <a href="#" id="backToLogin">Volver al inicio de sesión</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+</body>
+</html>

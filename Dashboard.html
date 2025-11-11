@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Protección Civil</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="dashboard.html" class="navbar-brand">
+                <div class="brand-logo">
+                    <img src="https://www.proteccioncivil.gob.sv/wp-content/uploads/2009/06/procivil-png-peque-1.png" alt="Protección Civil">
+                </div>
+                <div class="brand-text">
+                    <h1>PROTECCIÓN CIVIL</h1>
+                    <p>Sistema de Gestión Integral</p>
+                </div>
+            </a>
+            
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-target="activities">
+                        <i class="fas fa-tasks"></i>
+                        <span>Actividades</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-target="users">
+                        <i class="fas fa-users-cog"></i>
+                        <span>Gestión de Usuarios</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-avatar">AD</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Administrador</div>
+                        <div class="user-role">Sistema Principal</div>
+                    </div>
+                </div>
+                <button class="logout-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Cerrar Sesión
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Sección de Bienvenida -->
+        <div class="welcome-content active" id="welcomeContent">
+            <div class="content-header">
+                <div class="page-title">
+                    <h2>Dashboard Principal</h2>
+                    <p>Bienvenido al Sistema de Gestión de Protección Civil</p>
+                </div>
+            </div>
+            
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Actividades</h3>
+                        <span class="stat-number">24</span>
+                        <span class="stat-text">Registradas</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Usuarios</h3>
+                        <span class="stat-number">15</span>
+                        <span class="stat-text">Activos</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Regiones</h3>
+                        <span class="stat-number">3</span>
+                        <span class="stat-text">Activas</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de Actividades -->
+        <div class="activities-content" id="activitiesContent">
+            <!-- Contenido de actividades se carga aquí -->
+        </div>
+
+        <!-- Sección de Usuarios -->
+        <div class="users-content" id="usersContent">
+            <!-- Contenido de usuarios se carga aquí -->
+        </div>
+    </div>
+    
+    <script src="JS/usuarios.js"></script>    
+    <script src="JS/actividades.js"></script>
+    <script src="JS/dashboard.js"></script>
+</body>
+</html>
