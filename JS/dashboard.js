@@ -103,286 +103,7 @@ document.getElementById('logoutBtn').addEventListener('click', function() {
     });
 });
 
-// Cargar módulo de usuarios
-function loadUsersModule() {
-    const usersContent = document.getElementById('usersContent');
-    
-    // Solo cargar si no está ya cargado
-    if (usersContent.querySelector('.table-container')) {
-        return;
-    }
-    
-    usersContent.innerHTML = `
-        <div class="content-header">
-            <div class="page-title">
-                <h2>Gestión de Usuarios</h2>
-                <p>Administre los usuarios del sistema</p>
-            </div>
-            <div class="page-actions">
-                <button class="btn btn-primary" id="newUserBtn">
-                    <i class="fas fa-plus-circle"></i>
-                    Nuevo Usuario
-                </button>
-                <div class="export-options">
-                    <button class="btn btn-secondary">
-                        <i class="fas fa-download"></i>
-                        Exportar
-                    </button>
-                    <div class="export-dropdown">
-                        <button class="export-option" data-format="excel">
-                            <i class="fas fa-file-excel"></i>
-                            Excel
-                        </button>
-                        <button class="export-option" data-format="pdf">
-                            <i class="fas fa-file-pdf"></i>
-                            PDF
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="filter-section">
-            <div class="filter-row">
-                <div class="form-group">
-                    <label for="searchUser">Buscar Usuario</label>
-                    <input type="text" id="searchUser" class="form-control" placeholder="Buscar por nombre o email...">
-                </div>
-                <div class="form-group">
-                    <label for="filterRole">Filtrar por Rol</label>
-                    <select id="filterRole" class="form-control">
-                        <option value="">Todos los roles</option>
-                        <option value="administrador">ADMINISTRADOR</option>
-                        <option value="usuario">USUARIO</option>
-                        <option value="visor">VISOR</option>
-                        <option value="editor">EDITOR</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="filterStatus">Filtrar por Estado</label>
-                    <select id="filterStatus" class="form-control">
-                        <option value="">Todos los estados</option>
-                        <option value="activo">Activo</option>
-                        <option value="inactivo">Inactivo</option>
-                    </select>
-                </div>
-            </div>
-            <div class="filter-actions">
-                <button class="btn btn-secondary" id="clearFilters">
-                    <i class="fas fa-times"></i>
-                    Limpiar Filtros
-                </button>
-                <button class="btn btn-primary" id="applyFilters">
-                    <i class="fas fa-filter"></i>
-                    Aplicar Filtros
-                </button>
-            </div>
-        </div>
-        
-        <div class="table-container">
-            <div class="table-header">
-                <div class="table-title">Lista de Usuarios</div>
-            </div>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Email</th>
-                        <th>Teléfono</th>
-                        <th>Rol</th>
-                        <th>Región</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="usersTableBody">
-                    <!-- Los usuarios se cargarán aquí dinámicamente -->
-                </tbody>
-            </table>
-            <div class="pagination">
-                <div class="pagination-info">
-                    Mostrando <span id="usersShowing">0</span> de <span id="usersTotal">0</span> usuarios
-                </div>
-                <div class="pagination-controls" id="usersPagination">
-                    <!-- Controles de paginación se cargarán aquí -->
-                </div>
-            </div>
-        </div>
-        
-        <!-- Modal para nuevo usuario -->
-        <div class="modal" id="userModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 id="modalUserTitle">Nuevo Usuario</h3>
-                    <button class="modal-close" id="closeUserModal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <form id="userForm">
-                        <input type="hidden" id="userId">
-                        <div class="form-section">
-                            <h2 class="section-title">
-                                <i class="fas fa-user"></i>
-                                Información Personal
-                            </h2>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="modalNombres" class="required">Nombres Completos</label>
-                                    <input type="text" id="modalNombres" class="form-control" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="modalTelefono" class="required">Teléfono</label>
-                                    <input type="tel" id="modalTelefono" class="form-control" required>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="modalEmail" class="required">Correo Electrónico</label>
-                                    <input type="email" id="modalEmail" class="form-control" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="modalUnidad" class="required">Unidad Organizacional</label>
-                                    <input type="text" id="modalUnidad" class="form-control" required>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-section">
-                            <h2 class="section-title">
-                                <i class="fas fa-key"></i>
-                                Credenciales de Acceso
-                            </h2>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="modalPassword" id="labelPassword" class="required">Contraseña</label>
-                                    <input type="password" id="modalPassword" class="form-control" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="modalDelegados" class="required">Delegados Territoriales</label>
-                                    <select id="modalDelegados" class="form-control" required>
-                                        <option value="">Seleccione una opción</option>
-                                        <option value="delegado1">Delegado Territorial 1</option>
-                                        <option value="delegado2">Delegado Territorial 2</option>
-                                        <option value="delegado3">Delegado Territorial 3</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="modalConfirmPassword" id="labelConfirmPassword" class="required">Confirmar Contraseña</label>
-                                    <input type="password" id="modalConfirmPassword" class="form-control" required>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-section">
-                            <h2 class="section-title">
-                                <i class="fas fa-user-shield"></i>
-                                Configuración de Permisos
-                            </h2>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="modalRol" class="required">Rol de Usuario</label>
-                                    <select id="modalRol" class="form-control" required>
-                                        <option value="">Seleccione un rol</option>
-                                        <option value="administrador">ADMINISTRADOR</option>
-                                        <option value="usuario">USUARIO</option>
-                                        <option value="visor">VISOR</option>
-                                        <option value="editor">EDITOR</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="modalRegion" class="required">Región Asignada</label>
-                                    <select id="modalRegion" class="form-control" required>
-                                        <option value="">Seleccione una región</option>
-                                        <option value="occidental">OCCIDENTAL</option>
-                                        <option value="central">CENTRAL</option>
-                                        <option value="oriental">ORIENTAL</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-section">
-                            <h2 class="section-title">
-                                <i class="fas fa-map-marker-alt"></i>
-                                Ubicación Geográfica
-                            </h2>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="modalDepartamento" class="required">Departamento</label>
-                                    <select id="modalDepartamento" class="form-control" required>
-                                        <option value="">Seleccione un departamento</option>
-                                        <option value="ahuachapan">AHUACHAPAN</option>
-                                        <option value="santa-ana">SANTA ANA</option>
-                                        <option value="sonsonate">SONSONATE</option>
-                                        <option value="san-salvador">SAN SALVADOR</option>
-                                        <option value="la-libertad">LA LIBERTAD</option>
-                                        <option value="san-miguel">SAN MIGUEL</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="modalDistrito" class="required">Distrito</label>
-                                    <select id="modalDistrito" class="form-control" required>
-                                        <option value="">Seleccione un distrito</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="modalMunicipio" class="required">Municipio</label>
-                                    <select id="modalMunicipio" class="form-control" required>
-                                        <option value="">Seleccione un municipio</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="modalFiltrado">Configuración de Filtrado</label>
-                                    <select id="modalFiltrado" class="form-control">
-                                        <option value="no-aplica">NO APLICA</option>
-                                        <option value="filtro-regional">FILTRO REGIONAL</option>
-                                        <option value="filtro-departamental">FILTRO DEPARTAMENTAL</option>
-                                        <option value="filtro-municipal">FILTRO MUNICIPAL</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-actions">
-                            <div class="modal-footer">
-                                <div class="footer-buttons">
-                                    <button type="button" class="btn btn-clear" id="clearUserForm">
-                                        <i class="fas fa-broom"></i>
-                                        Limpiar Formulario
-                                    </button>
-                                    <div class="action-buttons">
-                                        <button type="button" class="btn btn-cancel" id="cancelUserForm">
-                                            <i class="fas fa-times"></i>
-                                            Cancelar
-                                        </button>
-                                        <button type="submit" class="btn btn-save">
-                                            <i class="fas fa-save"></i>
-                                            Guardar Usuario
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Inicializar funcionalidad del módulo de usuarios
-    if (typeof initializeUsersModule === 'function') {
-        initializeUsersModule();
-    } else {
-        console.error('initializeUsersModule no está disponible');
-    }
-}
-
 // Cargar módulo de actividades
-// En la función loadActivitiesModule(), reemplaza SOLO la sección del footer del modal:
-// En la función loadActivitiesModule(), reemplaza la tabla:
 function loadActivitiesModule() {
     const activitiesContent = document.getElementById('activitiesContent');
     
@@ -473,31 +194,36 @@ function loadActivitiesModule() {
             </div>
         </div>
         
-        <div class="table-container">
+        <div class="table-container activities-container">
             <div class="table-header">
                 <div class="table-title">Lista de Actividades</div>
                 <div class="table-actions">
                     <span class="table-info">Total: <strong id="activitiesTotal">0</strong> actividades</span>
                 </div>
             </div>
-            <table class="activities-table">
-                <thead>
-                    <tr>
-                        <th>Unidad</th>
-                        <th>Fecha</th>
-                        <th>Actividad</th>
-                        <th>Departamento</th>
-                        <th>Municipio</th>
-                        <th>Técnico</th>
-                        <th>Usuario</th>
-                        <th>Estado</th>
-                        <th>Opciones</th>
-                    </tr>
-                </thead>
-                <tbody id="activitiesTableBody">
-                    <!-- Las actividades se cargarán aquí dinámicamente -->
-                </tbody>
-            </table>
+            <div class="table-scroll-wrapper">
+                <table class="activities-table">
+                    <thead>
+                        <tr>
+                            <th>Unidad</th>
+                            <th>Fecha</th>
+                            <th>Actividad</th>
+                            <th>Departamento</th>
+                            <th>Municipio</th>
+                            <th>Técnico</th>
+                            <th>Usuario</th>
+                            <th>Estado</th>
+                            <th>Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activitiesTableBody">
+                        <!-- Las actividades se cargarán aquí dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="scroll-indicator">
+                <i class="fas fa-arrows-left-right"></i> Desplazar horizontalmente
+            </div>
             <div class="pagination">
                 <div class="pagination-info">
                     Mostrando registros del <span id="activitiesFrom">0</span> al <span id="activitiesTo">0</span> de un total de <span id="activitiesTotal">0</span> registros
@@ -747,7 +473,7 @@ function loadActivitiesModule() {
     }
 }
 
-// En la función loadUsersModule(), reemplaza la tabla:
+// Cargar módulo de usuarios
 function loadUsersModule() {
     const usersContent = document.getElementById('usersContent');
     
@@ -823,26 +549,28 @@ function loadUsersModule() {
             </div>
         </div>
         
-        <div class="table-container">
+        <div class="table-container users-container">
             <div class="table-header">
                 <div class="table-title">Lista de Usuarios</div>
             </div>
-            <table class="users-table">
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Email</th>
-                        <th>Teléfono</th>
-                        <th>Rol</th>
-                        <th>Región</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="usersTableBody">
-                    <!-- Los usuarios se cargarán aquí dinámicamente -->
-                </tbody>
-            </table>
+            <div class="table-scroll-wrapper">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Teléfono</th>
+                            <th>Rol</th>
+                            <th>Región</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <!-- Los usuarios se cargarán aquí dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
             <div class="pagination">
                 <div class="pagination-info">
                     Mostrando <span id="usersShowing">0</span> de <span id="usersTotal">0</span> usuarios

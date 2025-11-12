@@ -461,7 +461,7 @@ textarea.form-control {
     color: #e53e3e;
 }
 
-/* Table Container Base - CON SCROLL HORIZONTAL */
+/* Table Container Base - CON SCROLL HORIZONTAL MEJORADO */
 .table-container {
     background: white;
     border-radius: var(--border-radius);
@@ -476,34 +476,38 @@ textarea.form-control {
     overflow-x: auto;
     overflow-y: visible;
     position: relative;
+    padding-bottom: 8px; /* Espacio para el scrollbar */
 }
 
 .table-scroll-wrapper::-webkit-scrollbar {
-    height: 8px;
+    height: 14px; /* Scrollbar más grande y visible */
 }
 
 .table-scroll-wrapper::-webkit-scrollbar-track {
     background: var(--light-bg);
-    border-radius: 4px;
+    border-radius: 8px;
+    margin: 0 20px;
 }
 
 .table-scroll-wrapper::-webkit-scrollbar-thumb {
-    background: var(--primary-light);
-    border-radius: 4px;
+    background: var(--primary-medium);
+    border-radius: 8px;
+    border: 3px solid var(--light-bg);
     transition: var(--transition);
 }
 
 .table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-medium);
+    background: var(--primary-dark);
+    transform: scale(1.05);
 }
 
 .table-header {
     padding: 25px;
-    border-bottom: 1px solid var(--light-border);
+    border-bottom: 2px solid var(--light-border); /* Borde más grueso */
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(135deg, var(--light-bg) 0%, #ffffff 100%);
+    background: linear-gradient(135deg, var(--light-bg) 0%, #f8fafc 100%);
     position: sticky;
     left: 0;
     min-width: fit-content;
@@ -520,23 +524,23 @@ textarea.form-control {
     gap: 10px;
 }
 
-/* TABLA DE ACTIVIDADES - DISEÑO ESPECÍFICO CON TAMAÑOS OPTIMIZADOS */
+/* TABLA DE ACTIVIDADES - DISEÑO MEJORADO CON MÁS ESPACIO */
 .activities-table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    font-size: 0.94rem;
-    min-width: 1300px; /* Ancho mínimo para forzar scroll horizontal */
+    font-size: 0.95rem;
+    min-width: 1400px; /* Aumentado para más espacio */
 }
 
 .activities-table th {
     background: var(--light-bg);
-    padding: 18px 16px;
+    padding: 20px 18px; /* Más padding vertical */
     text-align: left;
     font-weight: 600;
     color: var(--primary-dark);
     border-bottom: 2px solid var(--light-border);
-    font-size: 0.87rem;
+    font-size: 0.88rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     white-space: nowrap;
@@ -546,14 +550,14 @@ textarea.form-control {
 }
 
 .activities-table td {
-    padding: 18px 16px;
+    padding: 20px 18px; /* Más padding vertical */
     border-bottom: 1px solid var(--light-border);
     color: var(--dark-text);
     vertical-align: middle;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    line-height: 1.4;
+    line-height: 1.5; /* Mejor interlineado */
 }
 
 .activities-table tbody tr {
@@ -562,89 +566,90 @@ textarea.form-control {
 
 .activities-table tbody tr:hover {
     background: var(--light-bg);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .activities-table tbody tr:last-child td {
     border-bottom: none;
 }
 
-/* Distribución OPTIMIZADA para ACTIVIDADES - TAMAÑOS ESPECÍFICOS */
+/* Distribución MEJORADA para ACTIVIDADES - MÁS ESPACIO */
 .activities-table th:nth-child(1), 
 .activities-table td:nth-child(1) { /* Unidad */
-    width: 180px;
-    min-width: 180px;
-    max-width: 180px;
-    padding-left: 20px;
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+    padding-left: 25px;
 }
 
 .activities-table th:nth-child(2), 
 .activities-table td:nth-child(2) { /* Fecha */
-    width: 120px;
-    min-width: 120px;
-    max-width: 120px;
+    width: 140px;
+    min-width: 140px;
+    max-width: 140px;
 }
 
 .activities-table th:nth-child(3), 
 .activities-table td:nth-child(3) { /* Actividad */
-    width: 280px;
-    min-width: 280px;
-    max-width: 280px;
+    width: 320px;
+    min-width: 320px;
+    max-width: 320px;
     white-space: normal;
-    line-height: 1.3;
+    line-height: 1.4;
 }
 
 .activities-table th:nth-child(4), 
 .activities-table td:nth-child(4) { /* Departamento */
-    width: 160px;
-    min-width: 160px;
-    max-width: 160px;
+    width: 180px;
+    min-width: 180px;
+    max-width: 180px;
 }
 
 .activities-table th:nth-child(5), 
 .activities-table td:nth-child(5) { /* Municipio */
-    width: 160px;
-    min-width: 160px;
-    max-width: 160px;
+    width: 180px;
+    min-width: 180px;
+    max-width: 180px;
 }
 
 .activities-table th:nth-child(6), 
 .activities-table td:nth-child(6) { /* Técnico */
-    width: 200px;
-    min-width: 200px;
-    max-width: 200px;
+    width: 220px;
+    min-width: 220px;
+    max-width: 220px;
 }
 
 .activities-table th:nth-child(7), 
 .activities-table td:nth-child(7) { /* Usuario */
-    width: 200px;
-    min-width: 200px;
-    max-width: 200px;
+    width: 220px;
+    min-width: 220px;
+    max-width: 220px;
 }
 
 .activities-table th:nth-child(8), 
 .activities-table td:nth-child(8) { /* Estado */
-    width: 140px;
-    min-width: 140px;
-    max-width: 140px;
+    width: 150px;
+    min-width: 150px;
+    max-width: 150px;
     text-align: center;
-    padding-left: 12px;
-    padding-right: 12px;
+    padding-left: 15px;
+    padding-right: 15px;
 }
 
 .activities-table th:nth-child(9), 
 .activities-table td:nth-child(9) { /* Opciones */
-    width: 160px;
-    min-width: 160px;
-    max-width: 160px;
+    width: 240px; /* Aumentado para más espacio interno */
+    min-width: 240px;
+    max-width: 240px;
     text-align: center;
-    padding-left: 12px;
+    padding-left: 20px; /* Más padding interno */
     padding-right: 20px;
     position: sticky;
     right: 0;
     background: white;
     z-index: 5;
+    border-left: 2px solid var(--light-border); /* Línea separadora */
 }
 
 .activities-table th:nth-child(9) {
@@ -653,25 +658,26 @@ textarea.form-control {
 
 .activities-table tbody tr:hover td:nth-child(9) {
     background: var(--light-bg);
+    border-left: 2px solid var(--primary-light); /* Cambia el borde al hacer hover */
 }
 
-/* TABLA DE USUARIOS - DISEÑO ESPECÍFICO CON TAMAÑOS OPTIMIZADOS */
+/* TABLA DE USUARIOS - DISEÑO MEJORADO CON MÁS ESPACIO */
 .users-table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    font-size: 0.94rem;
-    min-width: 1200px; /* Ancho mínimo para forzar scroll horizontal */
+    font-size: 0.95rem;
+    min-width: 1200px; /* Reducido para evitar scroll horizontal */
 }
 
 .users-table th {
     background: var(--light-bg);
-    padding: 18px 16px;
+    padding: 20px 18px; /* Más padding vertical */
     text-align: left;
     font-weight: 600;
     color: var(--primary-dark);
     border-bottom: 2px solid var(--light-border);
-    font-size: 0.87rem;
+    font-size: 0.88rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     white-space: nowrap;
@@ -681,14 +687,14 @@ textarea.form-control {
 }
 
 .users-table td {
-    padding: 18px 16px;
+    padding: 20px 18px; /* Más padding vertical */
     border-bottom: 1px solid var(--light-border);
     color: var(--dark-text);
     vertical-align: middle;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    line-height: 1.4;
+    line-height: 1.5; /* Mejor interlineado */
 }
 
 .users-table tbody tr {
@@ -697,21 +703,21 @@ textarea.form-control {
 
 .users-table tbody tr:hover {
     background: var(--light-bg);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .users-table tbody tr:last-child td {
     border-bottom: none;
 }
 
-/* Distribución OPTIMIZADA para USUARIOS - TAMAÑOS ESPECÍFICOS */
+/* Distribución MEJORADA para USUARIOS - MÁS ESPACIO */
 .users-table th:nth-child(1), 
 .users-table td:nth-child(1) { /* Nombre */
-    width: 240px;
-    min-width: 240px;
-    max-width: 240px;
-    padding-left: 20px;
+    width: 260px;
+    min-width: 260px;
+    max-width: 260px;
+    padding-left: 25px;
 }
 
 .users-table th:nth-child(2), 
@@ -744,26 +750,27 @@ textarea.form-control {
 
 .users-table th:nth-child(6), 
 .users-table td:nth-child(6) { /* Estado */
-    width: 120px;
-    min-width: 120px;
-    max-width: 120px;
+    width: 130px;
+    min-width: 130px;
+    max-width: 130px;
     text-align: center;
-    padding-left: 12px;
-    padding-right: 12px;
+    padding-left: 15px;
+    padding-right: 15px;
 }
 
 .users-table th:nth-child(7), 
 .users-table td:nth-child(7) { /* Acciones */
-    width: 160px;
-    min-width: 160px;
-    max-width: 160px;
+    width: 240px; /* Aumentado para más espacio interno */
+    min-width: 240px;
+    max-width: 240px;
     text-align: center;
-    padding-left: 12px;
+    padding-left: 20px; /* Más padding interno */
     padding-right: 20px;
     position: sticky;
     right: 0;
     background: white;
     z-index: 5;
+    border-left: 2px solid var(--light-border); /* Línea separadora */
 }
 
 .users-table th:nth-child(7) {
@@ -772,20 +779,23 @@ textarea.form-control {
 
 .users-table tbody tr:hover td:nth-child(7) {
     background: var(--light-bg);
+    border-left: 2px solid var(--primary-light); /* Cambia el borde al hacer hover */
 }
 
-/* Estados - COMUNES PARA AMBAS TABLAS */
+/* Estados - MEJORADOS para más claridad */
 .status-badge {
-    padding: 8px 16px;
+    padding: 10px 18px; /* Más padding */
     border-radius: 20px;
-    font-size: 0.78rem;
+    font-size: 0.8rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     display: inline-block;
-    min-width: 100px;
+    min-width: 120px; /* Aseguramos ancho mínimo */
     text-align: center;
     line-height: 1.2;
+    white-space: nowrap;
+    overflow: visible;
 }
 
 .status-active {
@@ -806,31 +816,38 @@ textarea.form-control {
     border: 1px solid #fbd38d;
 }
 
-/* Botones de acción - MEJOR ESPACIADO */
+/* Botones de acción - MEJORADOS CON SEPARACIÓN DEL BORDE */
 .action-buttons {
     display: flex;
-    gap: 8px;
+    gap: 12px; /* Más espacio entre botones */
     justify-content: center;
     align-items: center;
     flex-wrap: nowrap;
-    padding: 4px 0;
+    padding: 8px 0; /* Más padding vertical */
+    min-width: 200px; /* Ancho mínimo para evitar recorte */
+    margin: 0 10px; /* Separación de los bordes */
 }
 
 .action-btn {
-    padding: 8px 14px;
+    padding: 12px 20px; /* Más padding horizontal */
     border: none;
     border-radius: var(--border-radius);
-    font-size: 0.82rem;
+    font-size: 0.85rem;
     cursor: pointer;
     transition: var(--transition);
     display: flex;
     align-items: center;
-    gap: 5px;
-    min-width: 75px;
+    gap: 8px;
+    min-width: 100px; /* Ancho mínimo garantizado */
+    max-width: 110px; /* Ancho máximo para consistencia */
     justify-content: center;
     font-weight: 500;
-    flex-shrink: 0;
+    flex-shrink: 0; /* Evita que se encojan */
     line-height: 1.2;
+    white-space: nowrap; /* Evita salto de línea */
+    overflow: visible; /* Asegura que todo el contenido sea visible */
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra sutil */
 }
 
 .action-btn.edit {
@@ -847,7 +864,7 @@ textarea.form-control {
 
 .action-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .action-btn:active {
@@ -874,23 +891,34 @@ textarea.form-control {
         0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-/* Scroll indicator */
-.scroll-indicator {
+/* Indicador de scroll mejorado - SOLO PARA ACTIVIDADES */
+.activities-container .scroll-indicator {
     position: absolute;
-    bottom: 10px;
-    right: 10px;
-    background: var(--primary-medium);
+    bottom: 15px;
+    right: 15px;
+    background: var(--primary-dark);
     color: white;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    opacity: 0.8;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    opacity: 0.9;
     transition: var(--transition);
     z-index: 20;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.scroll-indicator:hover {
+.activities-container .scroll-indicator:hover {
     opacity: 1;
+    transform: translateY(-2px);
+}
+
+/* Ocultar scroll indicator para usuarios */
+.users-container .scroll-indicator {
+    display: none;
 }
 
 /* Filter Section */
@@ -1398,6 +1426,18 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     .navbar-container {
         max-width: 100%;
     }
+    
+    .activities-table,
+    .users-table {
+        font-size: 0.92rem;
+    }
+    
+    .activities-table th,
+    .activities-table td,
+    .users-table th,
+    .users-table td {
+        padding: 18px 16px;
+    }
 }
 
 @media (max-width: 768px) {
@@ -1468,6 +1508,57 @@ input[type="time"]::-webkit-calendar-picker-indicator {
         font-size: 0.88rem;
     }
     
+    .table-scroll-wrapper::-webkit-scrollbar {
+        height: 8px;
+    }
+    
+    .activities-table th,
+    .activities-table td,
+    .users-table th,
+    .users-table td {
+        padding: 16px 12px;
+        font-size: 0.85rem;
+    }
+    
+    .status-badge {
+        padding: 8px 14px;
+        min-width: 100px;
+        font-size: 0.78rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 10px; /* Más espacio en móviles */
+        min-width: 160px;
+        margin: 0 8px; /* Menos margen en móviles */
+        padding: 10px 0; /* Más padding vertical */
+    }
+    
+    .action-btn {
+        min-width: 120px;
+        max-width: 120px;
+        padding: 10px 16px;
+        font-size: 0.82rem;
+    }
+    
+    .activities-table th:nth-child(9), 
+    .activities-table td:nth-child(9) {
+        width: 180px;
+        min-width: 180px;
+        max-width: 180px;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    .users-table th:nth-child(7), 
+    .users-table td:nth-child(7) {
+        width: 180px;
+        min-width: 180px;
+        max-width: 180px;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
     .modal-content {
         width: 95%;
         margin: 5% auto;
@@ -1495,29 +1586,11 @@ input[type="time"]::-webkit-calendar-picker-indicator {
         justify-content: center;
     }
     
-    .action-buttons {
-        flex-direction: column;
-        gap: 6px;
-    }
-    
-    .action-btn {
-        min-width: 100%;
-        font-size: 0.8rem;
-        padding: 6px 10px;
-    }
-    
-    .activities-table th,
-    .activities-table td,
-    .users-table th,
-    .users-table td {
-        padding: 14px 10px;
-        font-size: 0.85rem;
-    }
-    
-    .status-badge {
-        font-size: 0.75rem;
+    .activities-container .scroll-indicator {
         padding: 6px 12px;
-        min-width: 90px;
+        font-size: 0.75rem;
+        bottom: 10px;
+        right: 10px;
     }
 }
 
@@ -1552,7 +1625,47 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     .activities-table td,
     .users-table th,
     .users-table td {
-        padding: 12px 8px;
+        padding: 14px 10px;
         font-size: 0.82rem;
+    }
+    
+    .table-scroll-wrapper::-webkit-scrollbar {
+        height: 6px;
+    }
+    
+    .action-buttons {
+        min-width: 150px;
+        margin: 0 5px; /* Menos margen en pantallas muy pequeñas */
+        gap: 8px;
+    }
+    
+    .action-btn {
+        min-width: 110px;
+        max-width: 110px;
+        padding: 8px 14px;
+        font-size: 0.8rem;
+    }
+    
+    .activities-table th:nth-child(9), 
+    .activities-table td:nth-child(9) {
+        width: 160px;
+        min-width: 160px;
+        max-width: 160px;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+    
+    .users-table th:nth-child(7), 
+    .users-table td:nth-child(7) {
+        width: 160px;
+        min-width: 160px;
+        max-width: 160px;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+    
+    .activities-container .scroll-indicator {
+        padding: 5px 10px;
+        font-size: 0.7rem;
     }
 }

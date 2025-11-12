@@ -152,10 +152,10 @@ function cargarUsuarios() {
                     <td><span class="status-badge ${usuario.estado === 'activo' ? 'status-active' : 'status-inactive'}">${usuario.estado}</span></td>
                     <td>
                         <div class="action-buttons">
-                            <button class="action-btn edit" onclick="editarUsuario(${usuario.id})">
+                            <button class="action-btn edit" onclick="editarUsuario(${usuario.id})" title="Editar usuario">
                                 <i class="fas fa-edit"></i> Editar
                             </button>
-                            <button class="action-btn delete" onclick="eliminarUsuario(${usuario.id})">
+                            <button class="action-btn delete" onclick="eliminarUsuario(${usuario.id})" title="Eliminar usuario">
                                 <i class="fas fa-trash"></i> Eliminar
                             </button>
                         </div>

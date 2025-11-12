@@ -179,10 +179,10 @@ function cargarActividades() {
                     <td><span class="status-badge ${estadoClass}">${estadoText}</span></td>
                     <td>
                         <div class="action-buttons">
-                            <button class="action-btn edit" onclick="editarActividad(${actividad.id})">
+                            <button class="action-btn edit" onclick="editarActividad(${actividad.id})" title="Editar actividad">
                                 <i class="fas fa-edit"></i> Editar
                             </button>
-                            <button class="action-btn delete" onclick="eliminarActividad(${actividad.id})">
+                            <button class="action-btn delete" onclick="eliminarActividad(${actividad.id})" title="Eliminar actividad">
                                 <i class="fas fa-trash"></i> Eliminar
                             </button>
                         </div>
