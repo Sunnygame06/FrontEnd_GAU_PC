@@ -205,12 +205,11 @@ function loadActivitiesModule() {
                 <table class="activities-table">
                     <thead>
                         <tr>
-                            <th>Unidad</th>
                             <th>Fecha</th>
                             <th>Actividad</th>
                             <th>Departamento</th>
                             <th>Municipio</th>
-                            <th>Técnico</th>
+                            <th>Rol</th>
                             <th>Usuario</th>
                             <th>Estado</th>
                             <th>Opciones</th>
@@ -220,9 +219,6 @@ function loadActivitiesModule() {
                         <!-- Las actividades se cargarán aquí dinámicamente -->
                     </tbody>
                 </table>
-            </div>
-            <div class="scroll-indicator">
-                <i class="fas fa-arrows-left-right"></i> Desplazar horizontalmente
             </div>
             <div class="pagination">
                 <div class="pagination-info">
@@ -249,26 +245,6 @@ function loadActivitiesModule() {
                                 <i class="fas fa-info-circle"></i>
                                 Información General
                             </h2>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="activityUnidad" class="required">Unidad</label>
-                                    <select id="activityUnidad" class="form-control" required>
-                                        <option value="">Seleccione una unidad</option>
-                                        <option value="Unidad Central">Unidad Central</option>
-                                        <option value="Unidad Regional Occidental">Unidad Regional Occidental</option>
-                                        <option value="Unidad Regional Central">Unidad Regional Central</option>
-                                        <option value="Unidad Regional Oriental">Unidad Regional Oriental</option>
-                                        <option value="Unidad Técnica">Unidad Técnica</option>
-                                        <option value="Unidad Operativa">Unidad Operativa</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="activityTecnico" class="required">Técnico Responsable</label>
-                                    <select id="activityTecnico" class="form-control" required>
-                                        <option value="">Seleccione un técnico</option>
-                                    </select>
-                                </div>
-                            </div>
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="activityEstado" class="required">Estado</label>
@@ -460,6 +436,153 @@ function loadActivitiesModule() {
                             </div>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- NUEVO MODAL: Detalles de la Actividad -->
+        <div class="modal" id="activityDetailModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Detalles de la Actividad</h3>
+                    <button class="modal-close" id="closeActivityDetailModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="detail-container">
+                        <div class="detail-section">
+                            <h2 class="section-title">
+                                <i class="fas fa-info-circle"></i>
+                                Información General
+                            </h2>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <label>Fecha:</label>
+                                    <span id="detailFecha">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <label>Actividad:</label>
+                                    <span id="detailActividad">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <label>Estado:</label>
+                                    <span id="detailEstado">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <label>Hora de Inicio:</label>
+                                    <span id="detailHoraInicio">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <label>Hora de Finalización:</label>
+                                    <span id="detailHoraFin">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <h2 class="section-title">
+                                <i class="fas fa-map"></i>
+                                Ubicación
+                            </h2>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <label>Región:</label>
+                                    <span id="detailRegion">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <label>Departamento:</label>
+                                    <span id="detailDepartamento">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <label>Municipio:</label>
+                                    <span id="detailMunicipio">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <label>Distrito:</label>
+                                    <span id="detailDistrito">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <h2 class="section-title">
+                                <i class="fas fa-users"></i>
+                                Personal
+                            </h2>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <label>Técnico:</label>
+                                    <span id="detailTecnico">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <label>Usuario:</label>
+                                    <span id="detailUsuario">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <h2 class="section-title">
+                                <i class="fas fa-tasks"></i>
+                                Tareas Realizadas
+                            </h2>
+                            <div id="detailTareas" class="tareas-container">
+                                <!-- Las tareas se cargarán aquí dinámicamente -->
+                            </div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <h2 class="section-title">
+                                <i class="fas fa-user-friends"></i>
+                                Participantes
+                            </h2>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <label>Hombres:</label>
+                                    <span id="detailHombres">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <label>Mujeres:</label>
+                                    <span id="detailMujeres">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <h2 class="section-title">
+                                <i class="fas fa-clipboard-check"></i>
+                                Resultados y Observaciones
+                            </h2>
+                            <div class="detail-full">
+                                <div class="detail-item full-width">
+                                    <label>Resultados:</label>
+                                    <div id="detailResultados" class="detail-text">-</div>
+                                </div>
+                                <div class="detail-item full-width">
+                                    <label>Observaciones:</label>
+                                    <div id="detailObservaciones" class="detail-text">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <h2 class="section-title">
+                                <i class="fas fa-calendar-alt"></i>
+                                Información de Registro
+                            </h2>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <label>Fecha de Registro:</label>
+                                    <span id="detailFechaRegistro">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" id="closeDetailBtn">
+                        <i class="fas fa-times"></i>
+                        Cerrar
+                    </button>
                 </div>
             </div>
         </div>

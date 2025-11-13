@@ -574,77 +574,70 @@ textarea.form-control {
     border-bottom: none;
 }
 
-/* Distribución MEJORADA para ACTIVIDADES - MÁS ESPACIO */
+/* AJUSTE CRÍTICO: Distribución MEJORADA para ACTIVIDADES - ESPACIO FIJO PARA OPCIONES */
 .activities-table th:nth-child(1), 
-.activities-table td:nth-child(1) { /* Unidad */
-    width: 200px;
-    min-width: 200px;
-    max-width: 200px;
-    padding-left: 25px;
+.activities-table td:nth-child(1) { /* Fecha */
+    width: 120px;
+    min-width: 120px;
+    max-width: 120px;
 }
 
 .activities-table th:nth-child(2), 
-.activities-table td:nth-child(2) { /* Fecha */
-    width: 140px;
-    min-width: 140px;
-    max-width: 140px;
-}
-
-.activities-table th:nth-child(3), 
-.activities-table td:nth-child(3) { /* Actividad */
-    width: 320px;
-    min-width: 320px;
-    max-width: 320px;
+.activities-table td:nth-child(2) { /* Actividad */
+    width: 280px;
+    min-width: 280px;
+    max-width: 280px;
     white-space: normal;
     line-height: 1.4;
 }
 
+.activities-table th:nth-child(3), 
+.activities-table td:nth-child(3) { /* Departamento */
+    width: 160px;
+    min-width: 160px;
+    max-width: 160px;
+}
+
 .activities-table th:nth-child(4), 
-.activities-table td:nth-child(4) { /* Departamento */
-    width: 180px;
-    min-width: 180px;
-    max-width: 180px;
+.activities-table td:nth-child(4) { /* Municipio */
+    width: 160px;
+    min-width: 160px;
+    max-width: 160px;
 }
 
 .activities-table th:nth-child(5), 
-.activities-table td:nth-child(5) { /* Municipio */
-    width: 180px;
-    min-width: 180px;
-    max-width: 180px;
+.activities-table td:nth-child(5) { /* Técnico */
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
 }
 
 .activities-table th:nth-child(6), 
-.activities-table td:nth-child(6) { /* Técnico */
-    width: 220px;
-    min-width: 220px;
-    max-width: 220px;
+.activities-table td:nth-child(6) { /* Usuario */
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
 }
 
 .activities-table th:nth-child(7), 
-.activities-table td:nth-child(7) { /* Usuario */
-    width: 220px;
-    min-width: 220px;
-    max-width: 220px;
-}
-
-.activities-table th:nth-child(8), 
-.activities-table td:nth-child(8) { /* Estado */
-    width: 150px;
-    min-width: 150px;
-    max-width: 150px;
+.activities-table td:nth-child(7) { /* Estado */
+    width: 130px;
+    min-width: 130px;
+    max-width: 130px;
     text-align: center;
     padding-left: 15px;
     padding-right: 15px;
 }
 
-.activities-table th:nth-child(9), 
-.activities-table td:nth-child(9) { /* Opciones */
-    width: 240px; /* Aumentado para más espacio interno */
-    min-width: 240px;
-    max-width: 240px;
+/* AJUSTE CRÍTICO: ESPACIO FIJO PARA LOS 3 BOTONES */
+.activities-table th:nth-child(8), 
+.activities-table td:nth-child(8) { /* Opciones */
+    width: 320px; /* Aumentado significativamente para 3 botones */
+    min-width: 320px;
+    max-width: 320px;
     text-align: center;
-    padding-left: 20px; /* Más padding interno */
-    padding-right: 20px;
+    padding-left: 15px;
+    padding-right: 15px;
     position: sticky;
     right: 0;
     background: white;
@@ -652,11 +645,11 @@ textarea.form-control {
     border-left: 2px solid var(--light-border); /* Línea separadora */
 }
 
-.activities-table th:nth-child(9) {
+.activities-table th:nth-child(8) {
     background: var(--light-bg);
 }
 
-.activities-table tbody tr:hover td:nth-child(9) {
+.activities-table tbody tr:hover td:nth-child(8) {
     background: var(--light-bg);
     border-left: 2px solid var(--primary-light); /* Cambia el borde al hacer hover */
 }
@@ -714,45 +707,45 @@ textarea.form-control {
 /* Distribución MEJORADA para USUARIOS - MÁS ESPACIO */
 .users-table th:nth-child(1), 
 .users-table td:nth-child(1) { /* Nombre */
-    width: 260px;
-    min-width: 260px;
-    max-width: 260px;
+    width: 240px;
+    min-width: 240px;
+    max-width: 240px;
     padding-left: 25px;
 }
 
 .users-table th:nth-child(2), 
 .users-table td:nth-child(2) { /* Email */
-    width: 280px;
-    min-width: 280px;
-    max-width: 280px;
+    width: 260px;
+    min-width: 260px;
+    max-width: 260px;
 }
 
 .users-table th:nth-child(3), 
 .users-table td:nth-child(3) { /* Teléfono */
-    width: 140px;
-    min-width: 140px;
-    max-width: 140px;
+    width: 130px;
+    min-width: 130px;
+    max-width: 130px;
 }
 
 .users-table th:nth-child(4), 
 .users-table td:nth-child(4) { /* Rol */
-    width: 140px;
-    min-width: 140px;
-    max-width: 140px;
+    width: 130px;
+    min-width: 130px;
+    max-width: 130px;
 }
 
 .users-table th:nth-child(5), 
 .users-table td:nth-child(5) { /* Región */
-    width: 140px;
-    min-width: 140px;
-    max-width: 140px;
+    width: 130px;
+    min-width: 130px;
+    max-width: 130px;
 }
 
 .users-table th:nth-child(6), 
 .users-table td:nth-child(6) { /* Estado */
-    width: 130px;
-    min-width: 130px;
-    max-width: 130px;
+    width: 120px;
+    min-width: 120px;
+    max-width: 120px;
     text-align: center;
     padding-left: 15px;
     padding-right: 15px;
@@ -816,36 +809,38 @@ textarea.form-control {
     border: 1px solid #fbd38d;
 }
 
-/* Botones de acción - MEJORADOS CON SEPARACIÓN DEL BORDE */
+/* AJUSTE CRÍTICO: Botones de acción - ESPACIO FIJO PARA 3 BOTONES */
 .action-buttons {
     display: flex;
-    gap: 12px; /* Más espacio entre botones */
+    gap: 8px; /* Espacio reducido pero suficiente */
     justify-content: center;
     align-items: center;
     flex-wrap: nowrap;
-    padding: 8px 0; /* Más padding vertical */
-    min-width: 200px; /* Ancho mínimo para evitar recorte */
-    margin: 0 10px; /* Separación de los bordes */
+    padding: 5px 0; /* Padding reducido */
+    min-width: 300px; /* Ancho mínimo aumentado para 3 botones */
+    max-width: 300px; /* Ancho máximo fijo */
+    margin: 0 auto; /* Centrado */
 }
 
 .action-btn {
-    padding: 12px 20px; /* Más padding horizontal */
+    padding: 10px 14px; /* Padding ajustado */
     border: none;
     border-radius: var(--border-radius);
-    font-size: 0.85rem;
+    font-size: 0.82rem; /* Tamaño de fuente reducido */
     cursor: pointer;
     transition: var(--transition);
     display: flex;
     align-items: center;
-    gap: 8px;
-    min-width: 100px; /* Ancho mínimo garantizado */
-    max-width: 110px; /* Ancho máximo para consistencia */
+    gap: 6px;
+    min-width: 90px; /* Ancho mínimo reducido */
+    max-width: 95px; /* Ancho máximo ajustado */
     justify-content: center;
     font-weight: 500;
     flex-shrink: 0; /* Evita que se encojan */
     line-height: 1.2;
     white-space: nowrap; /* Evita salto de línea */
-    overflow: visible; /* Asegura que todo el contenido sea visible */
+    overflow: hidden; /* Controla el desbordamiento */
+    text-overflow: ellipsis; /* Puntos suspensivos si es muy largo */
     text-align: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra sutil */
 }
@@ -862,6 +857,12 @@ textarea.form-control {
     border: 1px solid #feb2b2;
 }
 
+.action-btn.details {
+    background: #e6fffa;
+    color: #234e52;
+    border: 1px solid #81e6d9;
+}
+
 .action-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -869,6 +870,11 @@ textarea.form-control {
 
 .action-btn:active {
     transform: translateY(0);
+}
+
+.action-btn.details:hover {
+    background: #b2f5ea;
+    border-color: #4fd1c7;
 }
 
 /* Efectos visuales mejorados para las tablas */
@@ -1416,6 +1422,91 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     width: 16px;
 }
 
+/* Estilos para el modal de detalles */
+.detail-container {
+    padding: 0;
+}
+
+.detail-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--light-border);
+}
+
+.detail-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.detail-full {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.detail-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.detail-item label {
+    font-weight: 600;
+    color: var(--primary-dark);
+    font-size: 0.9rem;
+    margin-bottom: 0;
+}
+
+.detail-item span {
+    color: var(--dark-text);
+    font-size: 0.95rem;
+    padding: 8px 0;
+}
+
+.detail-text {
+    background: var(--light-bg);
+    padding: 12px 15px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--light-border);
+    color: var(--dark-text);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    min-height: 60px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.tareas-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tarea-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--light-bg);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--light-border);
+}
+
+.tarea-item i {
+    color: var(--success-color);
+    font-size: 0.9rem;
+}
+
 /* Responsive Design MEJORADO */
 @media (max-width: 1400px) {
     .main-container {
@@ -1526,37 +1617,39 @@ input[type="time"]::-webkit-calendar-picker-indicator {
         font-size: 0.78rem;
     }
     
+    /* AJUSTE RESPONSIVO: Botones en móviles */
     .action-buttons {
         flex-direction: column;
-        gap: 10px; /* Más espacio en móviles */
-        min-width: 160px;
-        margin: 0 8px; /* Menos margen en móviles */
-        padding: 10px 0; /* Más padding vertical */
+        gap: 8px;
+        min-width: 140px;
+        max-width: 140px;
+        margin: 0 auto;
+        padding: 8px 0;
     }
     
     .action-btn {
         min-width: 120px;
         max-width: 120px;
-        padding: 10px 16px;
-        font-size: 0.82rem;
+        padding: 8px 12px;
+        font-size: 0.78rem;
     }
     
-    .activities-table th:nth-child(9), 
-    .activities-table td:nth-child(9) {
-        width: 180px;
-        min-width: 180px;
-        max-width: 180px;
-        padding-left: 15px;
-        padding-right: 15px;
+    .activities-table th:nth-child(8), 
+    .activities-table td:nth-child(8) {
+        width: 160px;
+        min-width: 160px;
+        max-width: 160px;
+        padding-left: 10px;
+        padding-right: 10px;
     }
     
     .users-table th:nth-child(7), 
     .users-table td:nth-child(7) {
-        width: 180px;
-        min-width: 180px;
-        max-width: 180px;
-        padding-left: 15px;
-        padding-right: 15px;
+        width: 160px;
+        min-width: 160px;
+        max-width: 160px;
+        padding-left: 10px;
+        padding-right: 10px;
     }
     
     .modal-content {
@@ -1633,35 +1726,37 @@ input[type="time"]::-webkit-calendar-picker-indicator {
         height: 6px;
     }
     
+    /* AJUSTE FINAL: Botones en pantallas muy pequeñas */
     .action-buttons {
-        min-width: 150px;
-        margin: 0 5px; /* Menos margen en pantallas muy pequeñas */
-        gap: 8px;
+        min-width: 130px;
+        max-width: 130px;
+        margin: 0 auto;
+        gap: 6px;
     }
     
     .action-btn {
         min-width: 110px;
         max-width: 110px;
-        padding: 8px 14px;
-        font-size: 0.8rem;
+        padding: 7px 10px;
+        font-size: 0.75rem;
     }
     
-    .activities-table th:nth-child(9), 
-    .activities-table td:nth-child(9) {
-        width: 160px;
-        min-width: 160px;
-        max-width: 160px;
-        padding-left: 12px;
-        padding-right: 12px;
+    .activities-table th:nth-child(8), 
+    .activities-table td:nth-child(8) {
+        width: 140px;
+        min-width: 140px;
+        max-width: 140px;
+        padding-left: 8px;
+        padding-right: 8px;
     }
     
     .users-table th:nth-child(7), 
     .users-table td:nth-child(7) {
-        width: 160px;
-        min-width: 160px;
-        max-width: 160px;
-        padding-left: 12px;
-        padding-right: 12px;
+        width: 140px;
+        min-width: 140px;
+        max-width: 140px;
+        padding-left: 8px;
+        padding-right: 8px;
     }
     
     .activities-container .scroll-indicator {

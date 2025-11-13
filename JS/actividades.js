@@ -2,7 +2,6 @@
 let actividades = [
     {
         id: 1,
-        unidad: "Unidad Central",
         fecha: "2024-03-15",
         actividad: "Capacitación en Primeros Auxilios",
         departamento: "SAN SALVADOR",
@@ -24,7 +23,6 @@ let actividades = [
     },
     {
         id: 2,
-        unidad: "Unidad Regional Occidental",
         fecha: "2024-03-18",
         actividad: "Simulacro de Evacuación",
         departamento: "AHUACHAPAN",
@@ -46,7 +44,6 @@ let actividades = [
     },
     {
         id: 3,
-        unidad: "Unidad Regional Oriental",
         fecha: "2024-03-20",
         actividad: "Inspección de Infraestructura",
         departamento: "SAN MIGUEL",
@@ -68,7 +65,6 @@ let actividades = [
     },
     {
         id: 4,
-        unidad: "Unidad Técnica",
         fecha: "2024-03-22",
         actividad: "Evaluación de Riesgos",
         departamento: "LA LIBERTAD",
@@ -90,7 +86,6 @@ let actividades = [
     },
     {
         id: 5,
-        unidad: "Unidad Operativa",
         fecha: "2024-03-25",
         actividad: "Coordinación Interinstitucional",
         departamento: "SONSONATE",
@@ -169,7 +164,6 @@ function cargarActividades() {
                 const nombreUsuario = usuario ? usuario.nombres : 'Usuario no encontrado';
 
                 tr.innerHTML = `
-                    <td>${actividad.unidad}</td>
                     <td>${new Date(actividad.fecha).toLocaleDateString('es-SV')}</td>
                     <td>${actividad.actividad}</td>
                     <td>${actividad.departamento}</td>
@@ -179,6 +173,9 @@ function cargarActividades() {
                     <td><span class="status-badge ${estadoClass}">${estadoText}</span></td>
                     <td>
                         <div class="action-buttons">
+                            <button class="action-btn details" onclick="mostrarDetallesActividad(${actividad.id})" title="Ver detalles">
+                                <i class="fas fa-eye"></i> Detalles
+                            </button>
                             <button class="action-btn edit" onclick="editarActividad(${actividad.id})" title="Editar actividad">
                                 <i class="fas fa-edit"></i> Editar
                             </button>
@@ -296,7 +293,6 @@ function editarActividad(id) {
     // Llenar el modal con los datos de la actividad
     document.getElementById('modalActivityTitle').textContent = 'Editar Actividad';
     document.getElementById('activityId').value = actividad.id;
-    document.getElementById('activityUnidad').value = actividad.unidad;
     document.getElementById('activityTecnico').value = actividad.tecnico;
     document.getElementById('activityEstado').value = actividad.estado;
     document.getElementById('activityFecha').value = actividad.fecha;
@@ -419,7 +415,6 @@ function exportarActividades(formato) {
     const data = filteredActivities.map(actividad => {
         const usuario = obtenerUsuarioPorEmail(actividad.usuario);
         return {
-            'Unidad': actividad.unidad,
             'Fecha': actividad.fecha,
             'Actividad': actividad.actividad,
             'Departamento': actividad.departamento,
@@ -525,6 +520,64 @@ function manejarArchivo() {
     });
 }
 
+// NUEVA FUNCIÓN: Mostrar detalles de la actividad
+function mostrarDetallesActividad(id) {
+    const actividad = actividades.find(a => a.id === id);
+    if (!actividad) return;
+
+    // Llenar el modal de detalles con los datos de la actividad
+    document.getElementById('detailFecha').textContent = new Date(actividad.fecha).toLocaleDateString('es-SV');
+    document.getElementById('detailActividad').textContent = actividad.actividad;
+    document.getElementById('detailEstado').textContent = actividad.estado.charAt(0).toUpperCase() + actividad.estado.slice(1);
+    document.getElementById('detailEstado').className = `status-badge ${actividad.estado === 'completada' ? 'status-active' : actividad.estado === 'en-progreso' ? 'status-pending' : 'status-inactive'}`;
+    document.getElementById('detailHoraInicio').textContent = actividad.horaInicio;
+    document.getElementById('detailHoraFin').textContent = actividad.horaFin;
+    document.getElementById('detailRegion').textContent = actividad.region.toUpperCase();
+    document.getElementById('detailDepartamento').textContent = actividad.departamento;
+    document.getElementById('detailMunicipio').textContent = actividad.municipio;
+    document.getElementById('detailDistrito').textContent = actividad.distrito;
+    document.getElementById('detailTecnico').textContent = actividad.tecnico;
+    
+    // Obtener nombre del usuario
+    const usuario = obtenerUsuarioPorEmail(actividad.usuario);
+    document.getElementById('detailUsuario').textContent = usuario ? usuario.nombres : 'Usuario no encontrado';
+    
+    // Mostrar tareas seleccionadas
+    const tareasContainer = document.getElementById('detailTareas');
+    tareasContainer.innerHTML = '';
+    actividad.tareas.forEach(tarea => {
+        const tareaText = obtenerTextoDeTarea(tarea);
+        if (tareaText) {
+            const tareaElement = document.createElement('div');
+            tareaElement.className = 'tarea-item';
+            tareaElement.innerHTML = `<i class="fas fa-check-circle"></i> ${tareaText}`;
+            tareasContainer.appendChild(tareaElement);
+        }
+    });
+    
+    document.getElementById('detailHombres').textContent = actividad.participantesHombres;
+    document.getElementById('detailMujeres').textContent = actividad.participantesMujeres;
+    document.getElementById('detailResultados').textContent = actividad.resultados || 'No hay resultados registrados';
+    document.getElementById('detailObservaciones').textContent = actividad.observaciones || 'No hay observaciones registradas';
+    document.getElementById('detailFechaRegistro').textContent = new Date(actividad.fechaRegistro).toLocaleDateString('es-SV');
+
+    // Mostrar modal de detalles
+    document.getElementById('activityDetailModal').style.display = 'block';
+}
+
+// Función auxiliar para obtener texto de tarea
+function obtenerTextoDeTarea(valor) {
+    const tareasMap = {
+        'tarea1': 'Tarea de preparación',
+        'tarea2': 'Coordinación con autoridades',
+        'tarea3': 'Ejecución de actividad',
+        'tarea4': 'Evaluación de resultados',
+        'tarea5': 'Elaboración de informe',
+        'tarea6': 'Seguimiento y monitoreo'
+    };
+    return tareasMap[valor] || valor;
+}
+
 // Función para inicializar el módulo de actividades
 function initializeActivitiesModule() {
     // Agregar loading a la tabla
@@ -567,6 +620,7 @@ function initializeActivitiesModule() {
         });
     });
 
+    // CORRECCIÓN: Event listener para el formulario de actividades
     document.getElementById('activityForm').addEventListener('submit', (e) => {
         e.preventDefault();
         
@@ -574,7 +628,6 @@ function initializeActivitiesModule() {
         const usuarioActual = localStorage.getItem('userEmail') || 'sistema@proteccioncivil.gob.sv';
 
         const formData = {
-            unidad: document.getElementById('activityUnidad').value,
             fecha: document.getElementById('activityFecha').value,
             actividad: document.getElementById('activityTipo').value,
             departamento: document.getElementById('activityDepartamento').value.toUpperCase(),
@@ -591,6 +644,18 @@ function initializeActivitiesModule() {
             horaInicio: document.getElementById('activityInicio').value,
             horaFin: document.getElementById('activityFinalizacion').value
         };
+
+        // Validación básica
+        if (!formData.fecha || !formData.actividad || !formData.departamento || !formData.region) {
+            Swal.fire({
+                title: 'Error',
+                text: 'Por favor complete todos los campos obligatorios',
+                icon: 'error',
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#2d3748'
+            });
+            return;
+        }
 
         if (activityId) {
             // Editar actividad existente
@@ -613,6 +678,15 @@ function initializeActivitiesModule() {
         }
 
         document.getElementById('activityModal').style.display = 'none';
+    });
+
+    // Event listeners para el modal de detalles
+    document.getElementById('closeActivityDetailModal').addEventListener('click', () => {
+        document.getElementById('activityDetailModal').style.display = 'none';
+    });
+
+    document.getElementById('closeDetailBtn').addEventListener('click', () => {
+        document.getElementById('activityDetailModal').style.display = 'none';
     });
 
     // Filtros
