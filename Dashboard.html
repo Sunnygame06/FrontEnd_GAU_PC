@@ -71,7 +71,7 @@
                     </div>
                     <div class="stat-info">
                         <h3>Actividades</h3>
-                        <span class="stat-number">24</span>
+                        <span class="stat-number">0</span>
                         <span class="stat-text">Registradas</span>
                     </div>
                 </div>
@@ -82,7 +82,7 @@
                     </div>
                     <div class="stat-info">
                         <h3>Usuarios</h3>
-                        <span class="stat-number">15</span>
+                        <span class="stat-number">0</span>
                         <span class="stat-text">Activos</span>
                     </div>
                 </div>
@@ -111,8 +111,15 @@
         </div>
     </div>
     
-    <script src="JS/usuarios.js"></script>    
-    <script src="JS/actividades.js"></script>
+    <!-- Cargar servicios primero -->
+    <script src="JS/services/actividadService.js"></script>
+    <script src="JS/services/usuarioService.js"></script>
+    
+    <!-- Cargar controllers después -->
+    <script src="JS/controllers/actividadController.js"></script>
+    <script src="JS/controllers/usuarioController.js"></script>
+    
+    <!-- Cargar dashboard principal -->
     <script src="JS/dashboard.js"></script>
 </body>
 </html>
