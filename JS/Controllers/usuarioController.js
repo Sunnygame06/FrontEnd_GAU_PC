@@ -56,11 +56,87 @@ class UsuarioController {
             this.aplicarFiltrosUsuarios();
         });
 
-        // Dependencias entre selects geográficos
-        document.getElementById('modalDepartamento')?.addEventListener('change', (e) => {
-            this.cargarDatosGeograficos(e.target.value);
+        document.getElementById("modalRegion")?.addEventListener("change", (e) => {
+            this.cargarDepartamentos(e.target.value);
+        });
+
+        document.getElementById("modalDepartamento")?.addEventListener("change", (e) => {
+            const region = document.getElementById("modalRegion").value;
+            this.cargarMunicipios(region, e.target.value);
+        });
+
+        document.getElementById("modalMunicipio")?.addEventListener("change", (e) => {
+            const region = document.getElementById("modalRegion").value;
+            const departamento = document.getElementById("modalDepartamento").value;
+            this.cargarDistritos(region, departamento, e.target.value);
         });
     }
+
+    // ===============================================
+    // CARGAR DATOS SEGÚN REGIÓN
+    // ===============================================
+    cargarDepartamentos(region) {
+        const departamentoSelect = document.getElementById("modalDepartamento");
+        const municipioSelect = document.getElementById("modalMunicipio");
+        const distritoSelect = document.getElementById("modalDistrito");
+
+        departamentoSelect.innerHTML = "<option value=''>Seleccione un departamento</option>";
+        municipioSelect.innerHTML = "<option value=''>Seleccione un municipio</option>";
+        distritoSelect.innerHTML = "<option value=''>Seleccione un distrito</option>";
+
+        const data = datosGeograficos[region]?.departamentos;
+
+        if (!data) return;
+
+        Object.keys(data).forEach(dep => {
+            const opt = document.createElement("option");
+            opt.value = dep;
+            opt.textContent = dep;
+            departamentoSelect.appendChild(opt);
+        });
+    }
+
+    // ===============================================
+    // CARGAR MUNICIPIOS SEGÚN DEPARTAMENTO
+    // ===============================================
+    cargarMunicipios(region, departamento) {
+        const municipioSelect = document.getElementById("modalMunicipio");
+        const distritoSelect = document.getElementById("modalDistrito");
+
+        municipioSelect.innerHTML = "<option value=''>Seleccione un municipio</option>";
+        distritoSelect.innerHTML = "<option value=''>Seleccione un distrito</option>";
+
+        const data = datosGeograficos[region]?.departamentos?.[departamento]?.municipios;
+
+        if (!data) return;
+
+        Object.keys(data).forEach(mun => {
+            const opt = document.createElement("option");
+            opt.value = mun;
+            opt.textContent = mun;
+            municipioSelect.appendChild(opt);
+        });
+    }
+
+    // ===============================================
+    // CARGAR DISTRITOS SEGÚN MUNICIPIO
+    // ===============================================
+    cargarDistritos(region, departamento, municipio) {
+        const distritoSelect = document.getElementById("modalDistrito");
+        distritoSelect.innerHTML = "<option value=''>Seleccione un distrito</option>";
+
+        const data = datosGeograficos[region]?.departamentos?.[departamento]?.municipios?.[municipio]?.distritos;
+
+        if (!data) return;
+
+        data.forEach(dis => {
+            const opt = document.createElement("option");
+            opt.value = dis;
+            opt.textContent = dis;
+            distritoSelect.appendChild(opt);
+        });
+    }
+
 
     async cargarUsuarios() {
         const tbody = document.getElementById('usersTableBody');
@@ -100,6 +176,7 @@ class UsuarioController {
         const tr = document.createElement('tr');
         
         tr.innerHTML = `
+            <td>${usuario.id}</td>
             <td>${usuario.nombre}</td>
             <td>${usuario.email}</td>
             <td>${usuario.telefono}</td>
@@ -108,10 +185,10 @@ class UsuarioController {
             <td><span class="status-badge status-active">Activo</span></td>
             <td>
                 <div class="action-buttons">
-                    <button class="action-btn edit" onclick="usuarioController.editarUsuario(${usuario.Id})" title="Editar usuario">
+                    <button class="action-btn edit" onclick="usuarioController.editarUsuario(${usuario.id})" title="Editar usuario">
                         <i class="fas fa-edit"></i> Editar
                     </button>
-                    <button class="action-btn delete" onclick="usuarioController.eliminarUsuario(${usuario.Id})" title="Eliminar usuario">
+                    <button class="action-btn delete" onclick="usuarioController.eliminarUsuario(${usuario.id})" title="Eliminar usuario">
                         <i class="fas fa-trash"></i> Eliminar
                     </button>
                 </div>
@@ -216,7 +293,7 @@ class UsuarioController {
         
         document.getElementById('modalUserTitle').textContent = 'Editar Usuario';
         document.getElementById('userId').value = formData.id;
-        document.getElementById('modalNombres').value = formData.nombres;
+        document.getElementById('modalNombres').value = formData.nombre;
         document.getElementById('modalTelefono').value = formData.telefono;
         document.getElementById('modalEmail').value = formData.email;
         document.getElementById('modalUnidad').value = formData.unidad;
@@ -225,7 +302,7 @@ class UsuarioController {
         document.getElementById('modalFiltrado').value = formData.filtrado;
         
         // Cargar datos geográficos
-        this.cargarDatosGeograficos(formData.departamento, formData.distrito, formData.municipio);
+        this.cargarDatosGeograficos(formData.region, formData.departamento, formData.distrito, formData.municipio);
         
         // Ocultar campos de contraseña en edición
         const passwordGroup = document.getElementById('modalPassword').closest('.form-group');
@@ -274,8 +351,10 @@ class UsuarioController {
         // Limpiar selects dependientes
         const distritoSelect = document.getElementById('modalDistrito');
         const municipioSelect = document.getElementById('modalMunicipio');
+        const departamentoSelect = document.getElementById('modalDepartamento');
         if (distritoSelect) distritoSelect.innerHTML = '<option value="">Seleccione un distrito</option>';
         if (municipioSelect) municipioSelect.innerHTML = '<option value="">Seleccione un municipio</option>';
+        if (departamentoSelect) departamentoSelect.innerHTML = '<option value="">Seleccione un departamento</option>';
     }
 
     aplicarFiltrosUsuarios() {
@@ -296,12 +375,23 @@ class UsuarioController {
         this.aplicarFiltrosUsuarios();
     }
 
-    cargarDatosGeograficos(departamento, distritoSeleccionado = '', municipioSeleccionado = '') {
-        const datos = window.datosGeograficos ? window.datosGeograficos[departamento?.toLowerCase()] : null;
+    cargarDatosGeograficos(region, departamentoSeleccionado = '', distritoSeleccionado = '', municipioSeleccionado = '') {
+        const datos = window.datosGeograficos ? window.datosGeograficos[region?.toLowerCase()] : null;
         const distritoSelect = document.getElementById('modalDistrito');
         const municipioSelect = document.getElementById('modalMunicipio');
+        const departamentoSelect = document.getElementById('modalDepartamento');
         
-        if (datos && distritoSelect && municipioSelect) {
+        if (datos && distritoSelect && municipioSelect && departamentoSelect) {
+            //Cargar departamento
+            departamentoSelect.innerHTML = '<option value="">Seleccione un departamento</option>';
+            datos.departamentos.forEach(dep => {
+                const option = document.createElement('option');
+                option.value = dep;
+                option.textContent = dep;
+                option.selected = dep === departamentoSeleccionado;
+                departamentoSelect.appendChild(option);
+            });
+            
             // Cargar distritos
             distritoSelect.innerHTML = '<option value="">Seleccione un distrito</option>';
             datos.distritos.forEach(distrito => {
@@ -325,6 +415,7 @@ class UsuarioController {
             // Limpiar selects si no hay datos
             distritoSelect.innerHTML = '<option value="">Seleccione un distrito</option>';
             municipioSelect.innerHTML = '<option value="">Seleccione un municipio</option>';
+            departamentoSelect.innerHTML = '<option value="">Seleccione un departamento</option>';
         }
     }
 

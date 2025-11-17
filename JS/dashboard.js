@@ -332,6 +332,7 @@ function loadActivitiesModule() {
                                     <label for="activityMunicipio" class="required">Municipio</label>
                                     <select id="activityMunicipio" class="form-control" required>
                                         <option value="">SELECCIONE UN MUNICIPIO</option>
+                                        <option value="San Salvador">San Salvador</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -679,6 +680,7 @@ function loadUsersModule() {
                 <table class="users-table">
                     <thead>
                         <tr>
+                            <th>ID</th>
                             <th>Nombre</th>
                             <th>Email</th>
                             <th>Teléfono</th>
@@ -778,11 +780,10 @@ function loadUsersModule() {
                                     <label for="modalRegion" class="required">Región Asignada</label>
                                     <select id="modalRegion" class="form-control" required>
                                         <option value="">Seleccione una región</option>
+                                        <option value="Occidental">Occidental</option>
                                         <option value="Central">Central</option>
-                                        <option value="Este">Este</option>
-                                        <option value="Norte">Norte</option>
-                                        <option value="Sur">Sur</option>
-                                        <option value="Oeste">Oeste</option>
+                                        <option value="Paracentral">Paracentral</option>
+                                        <option value="Oriental">Oriental</option>
                                     </select>
                                 </div>
                             </div>
@@ -798,25 +799,20 @@ function loadUsersModule() {
                                     <label for="modalDepartamento" class="required">Departamento</label>
                                     <select id="modalDepartamento" class="form-control" required>
                                         <option value="">Seleccione un departamento</option>
-                                        <option value="Asunción">Asunción</option>
-                                        <option value="Alto Paraná">Alto Paraná</option>
-                                        <option value="San Pedro">San Pedro</option>
-                                        <option value="Itapúa">Itapúa</option>
-                                        <option value="Boquerón">Boquerón</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label for="modalDistrito" class="required">Distrito</label>
-                                    <select id="modalDistrito" class="form-control" required>
-                                        <option value="">Seleccione un distrito</option>
+                                    <label for="modalMunicipio" class="required">Municipio</label>
+                                    <select id="modalMunicipio" class="form-control" required>
+                                        <option value="">Seleccione un municipio</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="modalMunicipio" class="required">Municipio</label>
-                                    <select id="modalMunicipio" class="form-control" required>
-                                        <option value="">Seleccione un municipio</option>
+                                    <label for="modalDistrito" class="required">Distrito</label>
+                                    <select id="modalDistrito" class="form-control" required>
+                                        <option value="">Seleccione un distrito</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
