@@ -1,250 +1,145 @@
-// JS/controllers/usuarioController.js
 class UsuarioController {
     constructor() {
         this.usuarioService = new UsuarioService();
         this.currentPage = 0;
-        this.pageSize = 5;
+        this.pageSize = 10;
+        this.filteredUsers = [];
+        this.isOffline = localStorage.getItem('offlineMode') === 'true';
         this.init();
     }
 
-    init() {
+    async init() {
+        await this.setupModule();
+        await this.cargarUsuarios();
         this.setupEventListeners();
-        this.cargarUsuarios();
     }
 
-    setupEventListeners() {
-        // Los event listeners se configurarán cuando se cargue el módulo
+    async setupModule() {
+        // Si estamos en el dashboard, cargar el módulo dinámicamente
+        const usersContent = document.getElementById('usersContent');
+        if (usersContent && !usersContent.querySelector('.table-container')) {
+            try {
+                const response = await fetch('users.html');
+                const html = await response.text();
+                usersContent.innerHTML = html;
+            } catch (error) {
+                console.error('Error cargando el módulo de usuarios:', error);
+                usersContent.innerHTML = '<div class="error-message">Error al cargar el módulo de usuarios</div>';
+            }
+        }
     }
-
-    setupModuleEventListeners() {
-        // Event listeners para el modal de usuarios
-        document.getElementById('newUserBtn')?.addEventListener('click', () => {
-            this.limpiarFormularioUsuario();
-            document.getElementById('userModal').style.display = 'block';
-        });
-
-        document.getElementById('closeUserModal')?.addEventListener('click', () => {
-            document.getElementById('userModal').style.display = 'none';
-        });
-
-        document.getElementById('cancelUserForm')?.addEventListener('click', () => {
-            document.getElementById('userModal').style.display = 'none';
-        });
-
-        document.getElementById('clearUserForm')?.addEventListener('click', () => {
-            this.limpiarFormularioUsuario();
-            this.mostrarMensaje('Formulario limpiado', 'Todos los campos han sido restablecidos', 'info');
-        });
-
-        // Form submit
-        document.getElementById('userForm')?.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.guardarUsuario();
-        });
-
-        // Filtros
-        document.getElementById('applyFilters')?.addEventListener('click', () => {
-            this.aplicarFiltrosUsuarios();
-        });
-
-        document.getElementById('clearFilters')?.addEventListener('click', () => {
-            this.limpiarFiltrosUsuarios();
-        });
-
-        // Búsqueda en tiempo real
-        document.getElementById('searchUser')?.addEventListener('input', () => {
-            this.aplicarFiltrosUsuarios();
-        });
-
-        document.getElementById("modalRegion")?.addEventListener("change", (e) => {
-            this.cargarDepartamentos(e.target.value);
-        });
-
-        document.getElementById("modalDepartamento")?.addEventListener("change", (e) => {
-            const region = document.getElementById("modalRegion").value;
-            this.cargarMunicipios(region, e.target.value);
-        });
-
-        document.getElementById("modalMunicipio")?.addEventListener("change", (e) => {
-            const region = document.getElementById("modalRegion").value;
-            const departamento = document.getElementById("modalDepartamento").value;
-            this.cargarDistritos(region, departamento, e.target.value);
-        });
-    }
-
-    // ===============================================
-    // CARGAR DATOS SEGÚN REGIÓN
-    // ===============================================
-    cargarDepartamentos(region) {
-        const departamentoSelect = document.getElementById("modalDepartamento");
-        const municipioSelect = document.getElementById("modalMunicipio");
-        const distritoSelect = document.getElementById("modalDistrito");
-
-        departamentoSelect.innerHTML = "<option value=''>Seleccione un departamento</option>";
-        municipioSelect.innerHTML = "<option value=''>Seleccione un municipio</option>";
-        distritoSelect.innerHTML = "<option value=''>Seleccione un distrito</option>";
-
-        const data = datosGeograficos[region]?.departamentos;
-
-        if (!data) return;
-
-        Object.keys(data).forEach(dep => {
-            const opt = document.createElement("option");
-            opt.value = dep;
-            opt.textContent = dep;
-            departamentoSelect.appendChild(opt);
-        });
-    }
-
-    // ===============================================
-    // CARGAR MUNICIPIOS SEGÚN DEPARTAMENTO
-    // ===============================================
-    cargarMunicipios(region, departamento) {
-        const municipioSelect = document.getElementById("modalMunicipio");
-        const distritoSelect = document.getElementById("modalDistrito");
-
-        municipioSelect.innerHTML = "<option value=''>Seleccione un municipio</option>";
-        distritoSelect.innerHTML = "<option value=''>Seleccione un distrito</option>";
-
-        const data = datosGeograficos[region]?.departamentos?.[departamento]?.municipios;
-
-        if (!data) return;
-
-        Object.keys(data).forEach(mun => {
-            const opt = document.createElement("option");
-            opt.value = mun;
-            opt.textContent = mun;
-            municipioSelect.appendChild(opt);
-        });
-    }
-
-    // ===============================================
-    // CARGAR DISTRITOS SEGÚN MUNICIPIO
-    // ===============================================
-    cargarDistritos(region, departamento, municipio) {
-        const distritoSelect = document.getElementById("modalDistrito");
-        distritoSelect.innerHTML = "<option value=''>Seleccione un distrito</option>";
-
-        const data = datosGeograficos[region]?.departamentos?.[departamento]?.municipios?.[municipio]?.distritos;
-
-        if (!data) return;
-
-        data.forEach(dis => {
-            const opt = document.createElement("option");
-            opt.value = dis;
-            opt.textContent = dis;
-            distritoSelect.appendChild(opt);
-        });
-    }
-
 
     async cargarUsuarios() {
         const tbody = document.getElementById('usersTableBody');
-        if (!tbody) return;
+        const loadingDiv = this.createLoadingIndicator();
+        
+        if (tbody) {
+            tbody.innerHTML = '';
+            tbody.parentNode.appendChild(loadingDiv);
+            loadingDiv.classList.add('show');
+        }
 
-        const loadingDiv = document.getElementById('usersLoading');
-        
-        if (loadingDiv) loadingDiv.classList.add('show');
-        
         try {
             const response = await this.usuarioService.getAllUsuarios(this.currentPage, this.pageSize);
             const usuarios = response.content || [];
+            this.filteredUsers = usuarios;
 
-            tbody.innerHTML = '';
-
-            if (usuarios.length === 0) {
-                tbody.innerHTML = this.crearEstadoVacio('usuarios');
-            } else {
-                usuarios.forEach(usuario => {
-                    const tr = this.crearFilaUsuario(usuario);
-                    tbody.appendChild(tr);
-                });
-            }
-
-            this.actualizarPaginacionUsuarios(response.totalElements);
+            this.renderUsuarios(usuarios);
+            this.actualizarPaginacion(response);
             
         } catch (error) {
-            console.error('Error al cargar usuarios:', error);
-            this.mostrarError('Error al cargar usuarios', error.message);
-            tbody.innerHTML = this.crearEstadoError();
+            console.error('Error cargando usuarios:', error);
+            this.showError('Error al cargar los usuarios');
         } finally {
-            if (loadingDiv) loadingDiv.classList.remove('show');
+            loadingDiv.classList.remove('show');
         }
     }
 
-    crearFilaUsuario(usuario) {
-        const tr = document.createElement('tr');
-        
-        tr.innerHTML = `
-            <td>${usuario.id}</td>
-            <td>${usuario.nombre}</td>
-            <td>${usuario.email}</td>
-            <td>${usuario.telefono}</td>
-            <td>${usuario.rol}</td>
-            <td>${usuario.region}</td>
-            <td><span class="status-badge status-active">Activo</span></td>
-            <td>
-                <div class="action-buttons">
-                    <button class="action-btn edit" onclick="usuarioController.editarUsuario(${usuario.id})" title="Editar usuario">
-                        <i class="fas fa-edit"></i> Editar
-                    </button>
-                    <button class="action-btn delete" onclick="usuarioController.eliminarUsuario(${usuario.id})" title="Eliminar usuario">
-                        <i class="fas fa-trash"></i> Eliminar
-                    </button>
-                </div>
-            </td>
-        `;
-        return tr;
-    }
+    renderUsuarios(usuarios) {
+        const tbody = document.getElementById('usersTableBody');
+        if (!tbody) return;
 
-    async guardarUsuario() {
-        const userId = document.getElementById('userId')?.value;
-        const formData = this.obtenerDatosFormularioUsuario();
+        tbody.innerHTML = '';
 
-        // Validación básica
-        if (!this.validarFormularioUsuario(formData, !userId)) {
+        if (usuarios.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="empty-state">
+                        <i class="fas fa-users"></i>
+                        <h3>No se encontraron usuarios</h3>
+                        <p>Intente ajustar los filtros de búsqueda</p>
+                    </td>
+                </tr>
+            `;
             return;
         }
 
-        try {
-            const usuarioDTO = this.usuarioService.convertirFormDataADTO(formData);
-
-            if (userId) {
-                // Editar usuario existente
-                await this.usuarioService.updateUsuario(userId, usuarioDTO);
-                this.mostrarMensaje('¡Éxito!', 'Usuario actualizado correctamente', 'success');
-            } else {
-                // Crear nuevo usuario
-                await this.usuarioService.createUsuario(usuarioDTO);
-                this.mostrarMensaje('¡Éxito!', 'Usuario creado correctamente', 'success');
-            }
-
-            document.getElementById('userModal').style.display = 'none';
-            this.cargarUsuarios();
+        usuarios.forEach(usuario => {
+            const tr = document.createElement('tr');
             
-        } catch (error) {
-            console.error('Error al guardar usuario:', error);
-            this.mostrarError('Error al guardar usuario', error.message);
-        }
+            const estadoClass = usuario.estado === 'activo' ? 'status-active' : 'status-inactive';
+            const estadoText = usuario.estado === 'activo' ? 'Activo' : 'Inactivo';
+
+            tr.innerHTML = `
+                <td>${usuario.nombre}</td>
+                <td>${usuario.email}</td>
+                <td>${usuario.telefono}</td>
+                <td>${usuario.rol}</td>
+                <td>${usuario.region}</td>
+                <td><span class="status-badge ${estadoClass}">${estadoText}</span></td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="action-btn edit" onclick="usuarioController.editarUsuario(${usuario.Id})" title="Editar usuario">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                        <button class="action-btn delete" onclick="usuarioController.eliminarUsuario(${usuario.Id})" title="Eliminar usuario">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
     }
 
     async editarUsuario(id) {
         try {
-            const response = await this.usuarioService.getAllUsuarios(0, 1000);
-            const usuario = response.content.find(u => u.Id === id);
+            const usuarios = await this.usuarioService.getAllUsuarios(0, 1000);
+            const usuario = usuarios.content.find(u => u.Id === id);
             
             if (!usuario) {
-                this.mostrarError('Error', 'Usuario no encontrado');
+                this.showError('Usuario no encontrado');
                 return;
             }
 
-            this.llenarFormularioUsuario(usuario);
-            document.getElementById('userModal').style.display = 'block';
+            this.llenarFormularioEdicion(usuario);
+            this.mostrarModal('userModal');
             
         } catch (error) {
-            console.error('Error al cargar usuario para editar:', error);
-            this.mostrarError('Error', 'No se pudo cargar el usuario para editar');
+            console.error('Error editando usuario:', error);
+            this.showError('Error al cargar el usuario para editar');
         }
+    }
+
+    llenarFormularioEdicion(usuario) {
+        document.getElementById('modalUserTitle').textContent = 'Editar Usuario';
+        document.getElementById('userId').value = usuario.Id;
+        document.getElementById('modalNombres').value = usuario.nombre;
+        document.getElementById('modalTelefono').value = usuario.telefono;
+        document.getElementById('modalEmail').value = usuario.email;
+        document.getElementById('modalUnidad').value = usuario.unidad;
+        document.getElementById('modalRol').value = usuario.rol;
+        document.getElementById('modalRegion').value = usuario.region;
+        document.getElementById('modalFiltrado').value = usuario.filtrar || 'No Aplica';
+
+        // Ocultar campos de contraseña en edición
+        document.getElementById('modalPassword').closest('.form-group').style.display = 'none';
+        document.getElementById('modalConfirmPassword').closest('.form-group').style.display = 'none';
+        document.getElementById('labelPassword').classList.remove('required');
+        document.getElementById('labelConfirmPassword').classList.remove('required');
+
+        // Cargar selects dependientes
+        this.cargarSelectsDependientes(usuario.departamento, usuario.distrito, usuario.municipio);
     }
 
     async eliminarUsuario(id) {
@@ -262,183 +157,90 @@ class UsuarioController {
         if (result.isConfirmed) {
             try {
                 await this.usuarioService.deleteUsuario(id);
-                this.mostrarMensaje('Eliminado!', 'El usuario ha sido eliminado', 'success');
+                this.showSuccess('Usuario eliminado correctamente');
                 this.cargarUsuarios();
             } catch (error) {
-                console.error('Error al eliminar usuario:', error);
-                this.mostrarError('Error', 'No se pudo eliminar el usuario');
+                console.error('Error eliminando usuario:', error);
+                this.showError('Error al eliminar el usuario');
             }
         }
     }
 
+    async guardarUsuario(formData) {
+        try {
+            if (formData.id) {
+                await this.usuarioService.updateUsuario(formData.id, formData);
+                this.showSuccess('Usuario actualizado correctamente');
+            } else {
+                await this.usuarioService.createUsuario(formData);
+                this.showSuccess('Usuario creado correctamente');
+            }
+            
+            this.ocultarModal('userModal');
+            this.cargarUsuarios();
+            
+        } catch (error) {
+            console.error('Error guardando usuario:', error);
+            this.showError('Error al guardar el usuario');
+        }
+    }
+
     // Métodos auxiliares
-    obtenerDatosFormularioUsuario() {
-        return {
-            nombres: document.getElementById('modalNombres').value,
-            telefono: document.getElementById('modalTelefono').value,
-            email: document.getElementById('modalEmail').value,
-            unidad: document.getElementById('modalUnidad').value,
-            password: document.getElementById('modalPassword').value,
-            rol: document.getElementById('modalRol').value,
-            region: document.getElementById('modalRegion').value,
-            departamento: document.getElementById('modalDepartamento').value,
-            municipio: document.getElementById('modalMunicipio').value,
-            distrito: document.getElementById('modalDistrito').value,
-            filtrado: document.getElementById('modalFiltrado').value
-        };
-    }
-
-    llenarFormularioUsuario(usuario) {
-        const formData = this.usuarioService.convertirDTOAFormData(usuario);
-        
-        document.getElementById('modalUserTitle').textContent = 'Editar Usuario';
-        document.getElementById('userId').value = formData.id;
-        document.getElementById('modalNombres').value = formData.nombre;
-        document.getElementById('modalTelefono').value = formData.telefono;
-        document.getElementById('modalEmail').value = formData.email;
-        document.getElementById('modalUnidad').value = formData.unidad;
-        document.getElementById('modalRol').value = formData.rol;
-        document.getElementById('modalRegion').value = formData.region;
-        document.getElementById('modalFiltrado').value = formData.filtrado;
-        
-        // Cargar datos geográficos
-        this.cargarDatosGeograficos(formData.region, formData.departamento, formData.distrito, formData.municipio);
-        
-        // Ocultar campos de contraseña en edición
-        const passwordGroup = document.getElementById('modalPassword').closest('.form-group');
-        const confirmPasswordGroup = document.getElementById('modalConfirmPassword').closest('.form-group');
-        const labelPassword = document.getElementById('labelPassword');
-        const labelConfirmPassword = document.getElementById('labelConfirmPassword');
-        
-        if (passwordGroup) passwordGroup.style.display = 'none';
-        if (confirmPasswordGroup) confirmPasswordGroup.style.display = 'none';
-        if (labelPassword) labelPassword.classList.remove('required');
-        if (labelConfirmPassword) labelConfirmPassword.classList.remove('required');
-    }
-
-    validarFormularioUsuario(formData, esNuevo) {
-        if (!formData.nombres || !formData.email || !formData.telefono || !formData.rol) {
-            this.mostrarError('Error', 'Por favor complete todos los campos obligatorios');
-            return false;
+    createLoadingIndicator() {
+        let loadingDiv = document.getElementById('usersLoading');
+        if (!loadingDiv) {
+            loadingDiv = document.createElement('div');
+            loadingDiv.id = 'usersLoading';
+            loadingDiv.className = 'table-loading';
+            loadingDiv.innerHTML = '<div class="loading-spinner"></div>';
         }
-
-        if (esNuevo && (!formData.password || formData.password !== document.getElementById('modalConfirmPassword').value)) {
-            this.mostrarError('Error', 'Las contraseñas no coinciden');
-            return false;
-        }
-
-        return true;
+        return loadingDiv;
     }
 
-    limpiarFormularioUsuario() {
-        const form = document.getElementById('userForm');
-        if (form) {
-            form.reset();
-            document.getElementById('userId').value = '';
-            
-            // Mostrar campos de contraseña
-            const passwordGroup = document.getElementById('modalPassword').closest('.form-group');
-            const confirmPasswordGroup = document.getElementById('modalConfirmPassword').closest('.form-group');
-            const labelPassword = document.getElementById('labelPassword');
-            const labelConfirmPassword = document.getElementById('labelConfirmPassword');
-            
-            if (passwordGroup) passwordGroup.style.display = 'block';
-            if (confirmPasswordGroup) confirmPasswordGroup.style.display = 'block';
-            if (labelPassword) labelPassword.classList.add('required');
-            if (labelConfirmPassword) labelConfirmPassword.classList.add('required');
-        }
-        
-        // Limpiar selects dependientes
-        const distritoSelect = document.getElementById('modalDistrito');
-        const municipioSelect = document.getElementById('modalMunicipio');
-        const departamentoSelect = document.getElementById('modalDepartamento');
-        if (distritoSelect) distritoSelect.innerHTML = '<option value="">Seleccione un distrito</option>';
-        if (municipioSelect) municipioSelect.innerHTML = '<option value="">Seleccione un municipio</option>';
-        if (departamentoSelect) departamentoSelect.innerHTML = '<option value="">Seleccione un departamento</option>';
+    mostrarModal(modalId) {
+        document.getElementById(modalId).style.display = 'block';
     }
 
-    aplicarFiltrosUsuarios() {
-        // Por ahora recargamos todos los usuarios
-        // En una implementación completa, esto filtraría en el backend
-        this.cargarUsuarios();
+    ocultarModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
     }
 
-    limpiarFiltrosUsuarios() {
-        const searchUser = document.getElementById('searchUser');
-        const filterRole = document.getElementById('filterRole');
-        const filterStatus = document.getElementById('filterStatus');
-        
-        if (searchUser) searchUser.value = '';
-        if (filterRole) filterRole.value = '';
-        if (filterStatus) filterStatus.value = '';
-        
-        this.aplicarFiltrosUsuarios();
+    showSuccess(message) {
+        Swal.fire({
+            title: '¡Éxito!',
+            text: message,
+            icon: 'success',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#2d3748'
+        });
     }
 
-    cargarDatosGeograficos(region, departamentoSeleccionado = '', distritoSeleccionado = '', municipioSeleccionado = '') {
-        const datos = window.datosGeograficos ? window.datosGeograficos[region?.toLowerCase()] : null;
-        const distritoSelect = document.getElementById('modalDistrito');
-        const municipioSelect = document.getElementById('modalMunicipio');
-        const departamentoSelect = document.getElementById('modalDepartamento');
-        
-        if (datos && distritoSelect && municipioSelect && departamentoSelect) {
-            //Cargar departamento
-            departamentoSelect.innerHTML = '<option value="">Seleccione un departamento</option>';
-            datos.departamentos.forEach(dep => {
-                const option = document.createElement('option');
-                option.value = dep;
-                option.textContent = dep;
-                option.selected = dep === departamentoSeleccionado;
-                departamentoSelect.appendChild(option);
-            });
-            
-            // Cargar distritos
-            distritoSelect.innerHTML = '<option value="">Seleccione un distrito</option>';
-            datos.distritos.forEach(distrito => {
-                const option = document.createElement('option');
-                option.value = distrito;
-                option.textContent = distrito;
-                option.selected = distrito === distritoSeleccionado;
-                distritoSelect.appendChild(option);
-            });
-            
-            // Cargar municipios
-            municipioSelect.innerHTML = '<option value="">Seleccione un municipio</option>';
-            datos.municipios.forEach(municipio => {
-                const option = document.createElement('option');
-                option.value = municipio;
-                option.textContent = municipio;
-                option.selected = municipio === municipioSeleccionado;
-                municipioSelect.appendChild(option);
-            });
-        } else if (distritoSelect && municipioSelect) {
-            // Limpiar selects si no hay datos
-            distritoSelect.innerHTML = '<option value="">Seleccione un distrito</option>';
-            municipioSelect.innerHTML = '<option value="">Seleccione un municipio</option>';
-            departamentoSelect.innerHTML = '<option value="">Seleccione un departamento</option>';
-        }
+    showError(message) {
+        Swal.fire({
+            title: 'Error',
+            text: message,
+            icon: 'error',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#2d3748'
+        });
     }
 
-    actualizarPaginacionUsuarios(totalItems) {
-        const totalPages = Math.ceil(totalItems / this.pageSize);
-        const showingStart = (this.currentPage * this.pageSize) + 1;
-        const showingEnd = Math.min((this.currentPage + 1) * this.pageSize, totalItems);
-        
-        const showingElement = document.getElementById('usersShowing');
-        const totalElement = document.getElementById('usersTotal');
-        
-        if (showingElement) showingElement.textContent = `${showingStart}-${showingEnd}`;
-        if (totalElement) totalElement.textContent = totalItems;
-        
-        this.actualizarControlesPaginacion('usersPagination', totalPages);
+    actualizarPaginacion(response) {
+        const showing = `${(this.currentPage * this.pageSize) + 1}-${Math.min((this.currentPage + 1) * this.pageSize, response.totalElements)}`;
+        const total = response.totalElements;
+
+        document.getElementById('usersShowing').textContent = showing;
+        document.getElementById('usersTotal').textContent = total;
+
+        this.renderPaginationControls(response.totalPages);
     }
 
-    actualizarControlesPaginacion(paginationId, totalPages) {
-        const paginationControls = document.getElementById(paginationId);
-        if (!paginationControls) return;
+    renderPaginationControls(totalPages) {
+        const paginationContainer = document.getElementById('usersPagination');
+        if (!paginationContainer) return;
 
-        paginationControls.innerHTML = '';
-        
+        paginationContainer.innerHTML = '';
+
         // Botón anterior
         const prevBtn = document.createElement('button');
         prevBtn.className = 'pagination-btn';
@@ -450,18 +252,10 @@ class UsuarioController {
                 this.cargarUsuarios();
             }
         });
-        paginationControls.appendChild(prevBtn);
-        
+        paginationContainer.appendChild(prevBtn);
+
         // Números de página
-        const maxPagesToShow = 5;
-        let startPage = Math.max(0, this.currentPage - Math.floor(maxPagesToShow / 2));
-        let endPage = Math.min(totalPages - 1, startPage + maxPagesToShow - 1);
-        
-        if (endPage - startPage + 1 < maxPagesToShow) {
-            startPage = Math.max(0, endPage - maxPagesToShow + 1);
-        }
-        
-        for (let i = startPage; i <= endPage; i++) {
+        for (let i = 0; i < totalPages; i++) {
             const pageBtn = document.createElement('button');
             pageBtn.className = `pagination-btn ${i === this.currentPage ? 'active' : ''}`;
             pageBtn.textContent = i + 1;
@@ -469,9 +263,9 @@ class UsuarioController {
                 this.currentPage = i;
                 this.cargarUsuarios();
             });
-            paginationControls.appendChild(pageBtn);
+            paginationContainer.appendChild(pageBtn);
         }
-        
+
         // Botón siguiente
         const nextBtn = document.createElement('button');
         nextBtn.className = 'pagination-btn';
@@ -483,57 +277,202 @@ class UsuarioController {
                 this.cargarUsuarios();
             }
         });
-        paginationControls.appendChild(nextBtn);
+        paginationContainer.appendChild(nextBtn);
     }
 
-    crearEstadoVacio(tipo) {
-        const icon = tipo === 'actividades' ? 'fa-clipboard-list' : 'fa-users';
-        const mensaje = tipo === 'actividades' ? 'No hay actividades registradas' : 'No se encontraron usuarios';
-        const submensaje = tipo === 'actividades' ? 'Comience registrando una nueva actividad' : 'Intente ajustar los filtros de búsqueda';
+    cargarSelectsDependientes(departamento, distrito, municipio) {
+        // Implementar la carga de selects dependientes según los datos geográficos
+        console.log('Cargando selects para:', departamento, distrito, municipio);
+    }
+
+    setupEventListeners() {
+        // Los event listeners se configurarán después de que el DOM esté listo
+        setTimeout(() => {
+            this.setupUserEventListeners();
+        }, 100);
+    }
+
+    setupUserEventListeners() {
+        // Nuevo usuario
+        const newUserBtn = document.getElementById('newUserBtn');
+        if (newUserBtn) {
+            newUserBtn.addEventListener('click', () => {
+                this.limpiarFormulario();
+                this.mostrarModal('userModal');
+            });
+        }
+
+        // Formulario de usuario
+        const userForm = document.getElementById('userForm');
+        if (userForm) {
+            userForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.procesarFormulario();
+            });
+        }
+
+        // Cerrar modales
+        this.setupModalCloseListeners();
+
+        // Filtros
+        const applyFiltersBtn = document.getElementById('applyFilters');
+        if (applyFiltersBtn) {
+            applyFiltersBtn.addEventListener('click', () => {
+                this.aplicarFiltros();
+            });
+        }
+
+        const clearFiltersBtn = document.getElementById('clearFilters');
+        if (clearFiltersBtn) {
+            clearFiltersBtn.addEventListener('click', () => {
+                this.limpiarFiltros();
+            });
+        }
+
+        // Búsqueda en tiempo real
+        const searchInput = document.getElementById('searchUser');
+        if (searchInput) {
+            searchInput.addEventListener('input', () => {
+                this.aplicarFiltros();
+            });
+        }
+    }
+
+    setupModalCloseListeners() {
+        const closeButtons = [
+            'closeUserModal', 'cancelUserForm'
+        ];
+
+        closeButtons.forEach(buttonId => {
+            const button = document.getElementById(buttonId);
+            if (button) {
+                button.addEventListener('click', () => {
+                    const modal = button.closest('.modal');
+                    if (modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            }
+        });
+    }
+
+    limpiarFormulario() {
+        document.getElementById('modalUserTitle').textContent = 'Nuevo Usuario';
+        document.getElementById('userForm').reset();
+        document.getElementById('userId').value = '';
         
-        return `
-            <tr>
-                <td colspan="7" class="empty-state">
-                    <i class="fas ${icon}"></i>
-                    <h3>${mensaje}</h3>
-                    <p>${submensaje}</p>
-                </td>
-            </tr>
-        `;
+        // Mostrar campos de contraseña en nuevo usuario
+        document.getElementById('modalPassword').closest('.form-group').style.display = 'block';
+        document.getElementById('modalConfirmPassword').closest('.form-group').style.display = 'block';
+        document.getElementById('labelPassword').classList.add('required');
+        document.getElementById('labelConfirmPassword').classList.add('required');
     }
 
-    crearEstadoError() {
-        return `
-            <tr>
-                <td colspan="7" class="empty-state">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <h3>Error al cargar los datos</h3>
-                    <p>Intente recargar la página</p>
-                </td>
-            </tr>
-        `;
+    procesarFormulario() {
+        const formData = this.obtenerDatosFormulario();
+        
+        if (this.validarFormulario(formData)) {
+            this.guardarUsuario(formData);
+        }
     }
 
-    mostrarMensaje(titulo, texto, icono) {
-        Swal.fire({
-            title: titulo,
-            text: texto,
-            icon: icono,
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#2d3748'
+    obtenerDatosFormulario() {
+        return {
+            id: document.getElementById('userId').value,
+            nombres: document.getElementById('modalNombres').value,
+            telefono: document.getElementById('modalTelefono').value,
+            email: document.getElementById('modalEmail').value,
+            unidad: document.getElementById('modalUnidad').value,
+            password: document.getElementById('modalPassword').value,
+            confirmPassword: document.getElementById('modalConfirmPassword').value,
+            rol: document.getElementById('modalRol').value,
+            region: document.getElementById('modalRegion').value,
+            departamento: document.getElementById('modalDepartamento').value,
+            municipio: document.getElementById('modalMunicipio').value,
+            distrito: document.getElementById('modalDistrito').value,
+            filtrado: document.getElementById('modalFiltrado').value
+        };
+    }
+
+    validarFormulario(formData) {
+        const camposRequeridos = [
+            'nombres', 'telefono', 'email', 'unidad', 
+            'rol', 'region', 'departamento', 'municipio', 'distrito'
+        ];
+
+        // Validar campos requeridos
+        for (const campo of camposRequeridos) {
+            if (!formData[campo]) {
+                this.showError(`El campo ${campo} es requerido`);
+                return false;
+            }
+        }
+
+        // Validar contraseñas si es nuevo usuario
+        if (!formData.id) {
+            if (!formData.password || !formData.confirmPassword) {
+                this.showError('Las contraseñas son requeridas para nuevos usuarios');
+                return false;
+            }
+
+            if (formData.password !== formData.confirmPassword) {
+                this.showError('Las contraseñas no coinciden');
+                return false;
+            }
+
+            if (formData.password.length < 6) {
+                this.showError('La contraseña debe tener al menos 6 caracteres');
+                return false;
+            }
+        }
+
+        // Validar email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+            this.showError('El formato del email no es válido');
+            return false;
+        }
+
+        return true;
+    }
+
+    aplicarFiltros() {
+        const searchTerm = document.getElementById('searchUser').value.toLowerCase();
+        const roleFilter = document.getElementById('filterRole').value;
+        const statusFilter = document.getElementById('filterStatus').value;
+
+        // En una implementación real, esto se haría en el backend
+        // Por ahora, filtramos en el frontend
+        this.cargarUsuarios().then(() => {
+            const filtered = this.filteredUsers.filter(usuario => {
+                const matchesSearch = usuario.nombre.toLowerCase().includes(searchTerm) || 
+                                     usuario.email.toLowerCase().includes(searchTerm);
+                const matchesRole = !roleFilter || usuario.rol === roleFilter;
+                const matchesStatus = !statusFilter || usuario.estado === statusFilter;
+                
+                return matchesSearch && matchesRole && matchesStatus;
+            });
+
+            this.renderUsuarios(filtered);
+            
+            // Actualizar información de paginación
+            const showing = `1-${filtered.length}`;
+            const total = filtered.length;
+            document.getElementById('usersShowing').textContent = showing;
+            document.getElementById('usersTotal').textContent = total;
         });
     }
 
-    mostrarError(titulo, texto) {
-        Swal.fire({
-            title: titulo,
-            text: texto,
-            icon: 'error',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#2d3748'
-        });
+    limpiarFiltros() {
+        document.getElementById('searchUser').value = '';
+        document.getElementById('filterRole').value = '';
+        document.getElementById('filterStatus').value = '';
+        this.cargarUsuarios();
     }
 }
 
-// Instancia global del controller
-const usuarioController = new UsuarioController();
+// Inicializar el controlador cuando esté disponible
+let usuarioController;
+document.addEventListener('DOMContentLoaded', () => {
+    usuarioController = new UsuarioController();
+});

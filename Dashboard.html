@@ -93,35 +93,48 @@
                     </div>
                     <div class="stat-info">
                         <h3>Regiones</h3>
-                        <span class="stat-number">3</span>
+                        <span class="stat-number">5</span>
                         <span class="stat-text">Activas</span>
                     </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Completadas</h3>
+                        <span class="stat-number">0</span>
+                        <span class="stat-text">Actividades</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modo Offline Indicator -->
+            <div class="offline-indicator" id="offlineIndicator" style="display: none;">
+                <div class="offline-warning">
+                    <i class="fas fa-wifi-slash"></i>
+                    <span>Modo offline activado - Datos de demostración</span>
                 </div>
             </div>
         </div>
 
         <!-- Sección de Actividades -->
         <div class="activities-content" id="activitiesContent">
-            <!-- Contenido de actividades se carga aquí -->
+            <!-- Se carga dinámicamente desde activities.html -->
         </div>
 
         <!-- Sección de Usuarios -->
         <div class="users-content" id="usersContent">
-            <!-- Contenido de usuarios se carga aquí -->
+            <!-- Se carga dinámicamente desde users.html -->
         </div>
     </div>
-    
-    <script src="JS/Services/data/geographicData.js"></script>
 
-    <!-- Cargar servicios primero -->
-    <script src="JS/services/actividadService.js"></script>
-    <script src="JS/services/usuarioService.js"></script>
-    
-    <!-- Cargar controllers después -->
-    <script src="JS/controllers/actividadController.js"></script>
-    <script src="JS/controllers/usuarioController.js"></script>
-    
-    <!-- Cargar dashboard principal -->
-    <script src="JS/dashboard.js"></script>
+    <!-- Scripts -->
+    <script src="js/services/actividadService.js"></script>
+    <script src="js/services/usuarioService.js"></script>
+    <script src="js/controllers/actividadController.js"></script>
+    <script src="js/controllers/usuarioController.js"></script>
+    <script src="js/dashboard.js"></script>
 </body>
 </html>

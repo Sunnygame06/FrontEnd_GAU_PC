@@ -1,184 +1,215 @@
-// JS/controllers/actividadController.js
 class ActividadController {
     constructor() {
         this.actividadService = new ActividadService();
         this.currentPage = 0;
-        this.pageSize = 5;
+        this.pageSize = 10;
+        this.filteredActivities = [];
+        this.isOffline = localStorage.getItem('offlineMode') === 'true';
         this.init();
     }
 
-    init() {
+    async init() {
+        await this.setupModule();
+        await this.cargarActividades();
         this.setupEventListeners();
-        this.cargarActividades();
     }
 
-    setupEventListeners() {
-        // Los event listeners se configurarán cuando se cargue el módulo
-    }
-
-    setupModuleEventListeners() {
-        // Event listeners para el modal de actividades
-        document.getElementById('newActivityBtn')?.addEventListener('click', () => {
-            this.limpiarFormularioActividad();
-            document.getElementById('activityModal').style.display = 'block';
-        });
-
-        document.getElementById('closeActivityModal')?.addEventListener('click', () => {
-            document.getElementById('activityModal').style.display = 'none';
-        });
-
-        document.getElementById('cancelActivityForm')?.addEventListener('click', () => {
-            document.getElementById('activityModal').style.display = 'none';
-        });
-
-        document.getElementById('clearActivityForm')?.addEventListener('click', () => {
-            this.limpiarFormularioActividad();
-            this.mostrarMensaje('Formulario limpiado', 'Todos los campos han sido restablecidos', 'info');
-        });
-
-        // Form submit
-        document.getElementById('activityForm')?.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.guardarActividad();
-        });
-
-        // Filtros
-        document.getElementById('applyActivityFilters')?.addEventListener('click', () => {
-            this.aplicarFiltrosActividades();
-        });
-
-        document.getElementById('clearActivityFilters')?.addEventListener('click', () => {
-            this.limpiarFiltros();
-        });
-
-        // Dependencias entre selects geográficos
-        document.getElementById('activityDepartamento')?.addEventListener('change', (e) => {
-            this.cargarDatosGeograficos(e.target.value);
-        });
-
-        // Modal de detalles
-        document.getElementById('closeActivityDetailModal')?.addEventListener('click', () => {
-            document.getElementById('activityDetailModal').style.display = 'none';
-        });
-
-        document.getElementById('closeDetailBtn')?.addEventListener('click', () => {
-            document.getElementById('activityDetailModal').style.display = 'none';
-        });
+    async setupModule() {
+        // Si estamos en el dashboard, cargar el módulo dinámicamente
+        const activitiesContent = document.getElementById('activitiesContent');
+        if (activitiesContent && !activitiesContent.querySelector('.table-container')) {
+            try {
+                const response = await fetch('activities.html');
+                const html = await response.text();
+                activitiesContent.innerHTML = html;
+            } catch (error) {
+                console.error('Error cargando el módulo de actividades:', error);
+                activitiesContent.innerHTML = '<div class="error-message">Error al cargar el módulo de actividades</div>';
+            }
+        }
     }
 
     async cargarActividades() {
         const tbody = document.getElementById('activitiesTableBody');
-        if (!tbody) return;
+        const loadingDiv = this.createLoadingIndicator();
+        
+        if (tbody) {
+            tbody.innerHTML = '';
+            tbody.parentNode.appendChild(loadingDiv);
+            loadingDiv.classList.add('show');
+        }
 
-        const loadingDiv = document.getElementById('activitiesLoading');
-        
-        if (loadingDiv) loadingDiv.classList.add('show');
-        
         try {
             const response = await this.actividadService.getAllActividades(this.currentPage, this.pageSize);
             const actividades = response.content || [];
+            this.filteredActivities = actividades;
 
-            tbody.innerHTML = '';
-
-            if (actividades.length === 0) {
-                tbody.innerHTML = this.crearEstadoVacio('actividades');
-            } else {
-                actividades.forEach(actividad => {
-                    const tr = this.crearFilaActividad(actividad);
-                    tbody.appendChild(tr);
-                });
-            }
-
-            this.actualizarPaginacionActividades(response.totalElements);
+            this.renderActividades(actividades);
+            this.actualizarPaginacion(response);
             
         } catch (error) {
-            console.error('Error al cargar actividades:', error);
-            this.mostrarError('Error al cargar actividades', error.message);
-            tbody.innerHTML = this.crearEstadoError();
+            console.error('Error cargando actividades:', error);
+            this.showError('Error al cargar las actividades');
         } finally {
-            if (loadingDiv) loadingDiv.classList.remove('show');
+            loadingDiv.classList.remove('show');
         }
     }
 
-    crearFilaActividad(actividad) {
-        const tr = document.createElement('tr');
-        
-        const estadoClass = this.obtenerClaseEstado(actividad.estado);
-        const estadoText = this.obtenerTextoEstado(actividad.estado);
-        const fechaFormateada = new Date(actividad.fecha).toLocaleDateString('es-SV');
+    renderActividades(actividades) {
+        const tbody = document.getElementById('activitiesTableBody');
+        if (!tbody) return;
 
-        tr.innerHTML = `
-            <td>${fechaFormateada}</td>
-            <td>${actividad.actividad_nombre}</td>
-            <td>${actividad.departamento}</td>
-            <td>${actividad.municipio}</td>
-            <td>${actividad.distrito}</td>
-            <td>Usuario ${actividad.Id_Usuario}</td>
-            <td><span class="status-badge ${estadoClass}">${estadoText}</span></td>
-            <td>
-                <div class="action-buttons">
-                    <button class="action-btn details" onclick="actividadController.mostrarDetallesActividad(${actividad.id})" title="Ver detalles">
-                        <i class="fas fa-eye"></i> Detalles
-                    </button>
-                    <button class="action-btn edit" onclick="actividadController.editarActividad(${actividad.id})" title="Editar actividad">
-                        <i class="fas fa-edit"></i> Editar
-                    </button>
-                    <button class="action-btn delete" onclick="actividadController.eliminarActividad(${actividad.id})" title="Eliminar actividad">
-                        <i class="fas fa-trash"></i> Eliminar
-                    </button>
-                </div>
-            </td>
-        `;
-        return tr;
-    }
+        tbody.innerHTML = '';
 
-    async guardarActividad() {
-        const activityId = document.getElementById('activityId')?.value;
-        const formData = this.obtenerDatosFormulario();
-
-        // Validación básica
-        if (!this.validarFormulario(formData)) {
+        if (actividades.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="empty-state">
+                        <i class="fas fa-clipboard-list"></i>
+                        <h3>No hay actividades registradas</h3>
+                        <p>Comience registrando una nueva actividad</p>
+                    </td>
+                </tr>
+            `;
             return;
         }
 
-        try {
-            const actividadDTO = this.actividadService.convertirFormDataADTO(formData);
+        actividades.forEach(actividad => {
+            const tr = document.createElement('tr');
+            
+            const estadoClass = this.getEstadoClass(actividad.estado);
+            const estadoText = this.getEstadoText(actividad.estado);
 
-            if (activityId) {
-                // Editar actividad existente
-                await this.actividadService.updateActividad(activityId, actividadDTO);
-                this.mostrarMensaje('¡Éxito!', 'Actividad actualizada correctamente', 'success');
-            } else {
-                // Crear nueva actividad
-                await this.actividadService.createActividad(actividadDTO);
-                this.mostrarMensaje('¡Éxito!', 'Actividad registrada correctamente', 'success');
+            tr.innerHTML = `
+                <td>${this.formatDate(actividad.fecha)}</td>
+                <td>${actividad.actividad_nombre}</td>
+                <td>${actividad.departamento}</td>
+                <td>${actividad.municipio}</td>
+                <td>${this.getNombreTecnico(actividad.Id_Usuario)}</td>
+                <td>${this.getNombreUsuario(actividad.Id_Usuario)}</td>
+                <td><span class="status-badge ${estadoClass}">${estadoText}</span></td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="action-btn details" onclick="actividadController.mostrarDetalles(${actividad.id})" title="Ver detalles">
+                            <i class="fas fa-eye"></i> Detalles
+                        </button>
+                        <button class="action-btn edit" onclick="actividadController.editarActividad(${actividad.id})" title="Editar actividad">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                        <button class="action-btn delete" onclick="actividadController.eliminarActividad(${actividad.id})" title="Eliminar actividad">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    async mostrarDetalles(id) {
+        try {
+            const actividades = await this.actividadService.getAllActividades(0, 1000);
+            const actividad = actividades.content.find(a => a.id === id);
+            
+            if (!actividad) {
+                this.showError('Actividad no encontrada');
+                return;
             }
 
-            document.getElementById('activityModal').style.display = 'none';
-            this.cargarActividades();
+            this.llenarModalDetalles(actividad);
+            this.mostrarModal('activityDetailModal');
             
         } catch (error) {
-            console.error('Error al guardar actividad:', error);
-            this.mostrarError('Error al guardar actividad', error.message);
+            console.error('Error mostrando detalles:', error);
+            this.showError('Error al cargar los detalles de la actividad');
         }
+    }
+
+    llenarModalDetalles(actividad) {
+        // Información General
+        document.getElementById('detailFecha').textContent = this.formatDate(actividad.fecha);
+        document.getElementById('detailActividad').textContent = actividad.actividad_nombre;
+        document.getElementById('detailEstado').textContent = this.getEstadoText(actividad.estado);
+        document.getElementById('detailEstado').className = `status-badge ${this.getEstadoClass(actividad.estado)}`;
+        document.getElementById('detailHoraInicio').textContent = actividad.H_inicio;
+        document.getElementById('detailHoraFin').textContent = actividad.H_Fin;
+
+        // Ubicación
+        document.getElementById('detailRegion').textContent = actividad.region;
+        document.getElementById('detailDepartamento').textContent = actividad.departamento;
+        document.getElementById('detailMunicipio').textContent = actividad.municipio;
+        document.getElementById('detailDistrito').textContent = actividad.distrito;
+
+        // Personal
+        document.getElementById('detailTecnico').textContent = this.getNombreTecnico(actividad.Id_Usuario);
+        document.getElementById('detailUsuario').textContent = this.getNombreUsuario(actividad.Id_Usuario);
+
+        // Tareas
+        const tareasContainer = document.getElementById('detailTareas');
+        tareasContainer.innerHTML = '';
+        if (actividad.tarea) {
+            const tareas = actividad.tarea.split(', ');
+            tareas.forEach(tarea => {
+                const tareaElement = document.createElement('div');
+                tareaElement.className = 'tarea-item';
+                tareaElement.innerHTML = `<i class="fas fa-check-circle"></i> ${tarea.trim()}`;
+                tareasContainer.appendChild(tareaElement);
+            });
+        }
+
+        // Participantes
+        document.getElementById('detailHombres').textContent = actividad.hombres || 0;
+        document.getElementById('detailMujeres').textContent = actividad.mujeres || 0;
+
+        // Resultados y Observaciones
+        document.getElementById('detailResultados').textContent = actividad.resultados || 'No hay resultados registrados';
+        document.getElementById('detailObservaciones').textContent = actividad.observaciones || 'No hay observaciones registradas';
     }
 
     async editarActividad(id) {
         try {
-            const response = await this.actividadService.getAllActividades(0, 1000);
-            const actividad = response.content.find(a => a.id === id);
+            const actividades = await this.actividadService.getAllActividades(0, 1000);
+            const actividad = actividades.content.find(a => a.id === id);
             
             if (!actividad) {
-                this.mostrarError('Error', 'Actividad no encontrada');
+                this.showError('Actividad no encontrada');
                 return;
             }
 
-            this.llenarFormularioActividad(actividad);
-            document.getElementById('activityModal').style.display = 'block';
+            this.llenarFormularioEdicion(actividad);
+            this.mostrarModal('activityModal');
             
         } catch (error) {
-            console.error('Error al cargar actividad para editar:', error);
-            this.mostrarError('Error', 'No se pudo cargar la actividad para editar');
+            console.error('Error editando actividad:', error);
+            this.showError('Error al cargar la actividad para editar');
+        }
+    }
+
+    llenarFormularioEdicion(actividad) {
+        document.getElementById('modalActivityTitle').textContent = 'Editar Actividad';
+        document.getElementById('activityId').value = actividad.id;
+        document.getElementById('activityEstado').value = actividad.estado;
+        document.getElementById('activityFecha').value = actividad.fecha;
+        document.getElementById('activityInicio').value = actividad.H_inicio;
+        document.getElementById('activityFinalizacion').value = actividad.H_Fin;
+        document.getElementById('activityRegion').value = actividad.region;
+        document.getElementById('activityDepartamento').value = actividad.departamento;
+        document.getElementById('activityTipo').value = actividad.actividad_nombre;
+        document.getElementById('activityHombres').value = actividad.hombres || 0;
+        document.getElementById('activityMujeres').value = actividad.mujeres || 0;
+        document.getElementById('activityResultados').value = actividad.resultados || '';
+        document.getElementById('activityObservaciones').value = actividad.observaciones || '';
+
+        // Cargar selects dependientes
+        this.cargarSelectsDependientes(actividad.departamento, actividad.distrito, actividad.municipio);
+
+        // Seleccionar tareas
+        if (actividad.tarea) {
+            const tareas = actividad.tarea.split(', ').map(t => t.trim());
+            const tareasSelect = document.getElementById('activityTareas');
+            Array.from(tareasSelect.options).forEach(option => {
+                option.selected = tareas.includes(option.value);
+            });
         }
     }
 
@@ -197,335 +228,323 @@ class ActividadController {
         if (result.isConfirmed) {
             try {
                 await this.actividadService.deleteActividad(id);
-                this.mostrarMensaje('Eliminada!', 'La actividad ha sido eliminada', 'success');
+                this.showSuccess('Actividad eliminada correctamente');
                 this.cargarActividades();
             } catch (error) {
-                console.error('Error al eliminar actividad:', error);
-                this.mostrarError('Error', 'No se pudo eliminar la actividad');
+                console.error('Error eliminando actividad:', error);
+                this.showError('Error al eliminar la actividad');
             }
         }
     }
 
-    async mostrarDetallesActividad(id) {
+    async guardarActividad(formData) {
         try {
-            const response = await this.actividadService.getAllActividades(0, 1000);
-            const actividad = response.content.find(a => a.id === id);
-            
-            if (!actividad) {
-                this.mostrarError('Error', 'Actividad no encontrada');
-                return;
+            if (formData.id) {
+                await this.actividadService.updateActividad(formData.id, formData);
+                this.showSuccess('Actividad actualizada correctamente');
+            } else {
+                await this.actividadService.createActividad(formData);
+                this.showSuccess('Actividad creada correctamente');
             }
-
-            this.llenarModalDetalles(actividad);
-            document.getElementById('activityDetailModal').style.display = 'block';
+            
+            this.ocultarModal('activityModal');
+            this.cargarActividades();
             
         } catch (error) {
-            console.error('Error al cargar detalles de actividad:', error);
-            this.mostrarError('Error', 'No se pudieron cargar los detalles de la actividad');
+            console.error('Error guardando actividad:', error);
+            this.showError('Error al guardar la actividad');
         }
     }
 
-    // Métodos auxiliares
-    obtenerDatosFormulario() {
-        return {
-            estado: document.getElementById('activityEstado').value,
-            fecha: document.getElementById('activityFecha').value,
-            horaInicio: document.getElementById('activityInicio').value,
-            horaFin: document.getElementById('activityFinalizacion').value,
-            region: document.getElementById('activityRegion').value,
-            departamento: document.getElementById('activityDepartamento').value,
-            municipio: document.getElementById('activityMunicipio').value,
-            distrito: document.getElementById('activityDistrito').value,
-            actividad: document.getElementById('activityTipo').value,
-            tareas: Array.from(document.getElementById('activityTareas').selectedOptions).map(opt => opt.value),
-            participantesHombres: parseInt(document.getElementById('activityHombres').value) || 0,
-            participantesMujeres: parseInt(document.getElementById('activityMujeres').value) || 0,
-            resultados: document.getElementById('activityResultados').value,
-            observaciones: document.getElementById('activityObservaciones').value,
-            respaldo: document.getElementById('activityRespaldo').files[0]?.name || null
-        };
+    // Métodos de UI y utilidades
+    setupEventListeners() {
+        // Filtros
+        const filterInput = document.getElementById('activityFilter');
+        if (filterInput) {
+            filterInput.addEventListener('input', (e) => this.filtrarActividades(e.target.value));
+        }
+
+        // Botón nueva actividad
+        const newActivityBtn = document.getElementById('newActivityBtn');
+        if (newActivityBtn) {
+            newActivityBtn.addEventListener('click', () => this.nuevaActividad());
+        }
+
+        // Formulario de actividad
+        const activityForm = document.getElementById('activityForm');
+        if (activityForm) {
+            activityForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
+        }
+
+        // Selects dependientes
+        const departamentoSelect = document.getElementById('activityDepartamento');
+        if (departamentoSelect) {
+            departamentoSelect.addEventListener('change', (e) => this.cargarMunicipios(e.target.value));
+        }
+
+        const municipioSelect = document.getElementById('activityMunicipio');
+        if (municipioSelect) {
+            municipioSelect.addEventListener('change', (e) => this.cargarDistritos(e.target.value));
+        }
     }
 
-    llenarFormularioActividad(actividad) {
-        const formData = this.actividadService.convertirDTOAFormData(actividad);
+    filtrarActividades(searchTerm) {
+        if (!searchTerm) {
+            this.renderActividades(this.filteredActivities);
+            return;
+        }
+
+        const filtered = this.filteredActivities.filter(actividad => 
+            actividad.actividad_nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            actividad.departamento.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            actividad.municipio.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            this.getNombreTecnico(actividad.Id_Usuario).toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+        this.renderActividades(filtered);
+    }
+
+    nuevaActividad() {
+        document.getElementById('modalActivityTitle').textContent = 'Nueva Actividad';
+        document.getElementById('activityForm').reset();
+        document.getElementById('activityId').value = '';
+        this.mostrarModal('activityModal');
+    }
+
+    handleFormSubmit(e) {
+        e.preventDefault();
+        const formData = this.getFormData();
+        this.guardarActividad(formData);
+    }
+
+    getFormData() {
+        const form = document.getElementById('activityForm');
+        const formData = new FormData(form);
+        const data = {};
         
-        document.getElementById('modalActivityTitle').textContent = 'Editar Actividad';
-        document.getElementById('activityId').value = formData.id;
-        document.getElementById('activityEstado').value = formData.estado;
-        document.getElementById('activityFecha').value = formData.fecha;
-        document.getElementById('activityInicio').value = formData.horaInicio;
-        document.getElementById('activityFinalizacion').value = formData.horaFin;
-        document.getElementById('activityRegion').value = formData.region;
-        document.getElementById('activityDepartamento').value = formData.departamento;
-        document.getElementById('activityTipo').value = formData.actividad;
-        
-        // Cargar datos geográficos
-        this.cargarDatosGeograficos(formData.departamento, formData.distrito, formData.municipio);
-        
-        // Seleccionar tareas
+        for (let [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+
+        // Procesar tareas seleccionadas
         const tareasSelect = document.getElementById('activityTareas');
         if (tareasSelect) {
-            Array.from(tareasSelect.options).forEach(option => {
-                option.selected = formData.tareas.includes(option.value);
-            });
+            const tareasSeleccionadas = Array.from(tareasSelect.selectedOptions).map(option => option.value);
+            data.tarea = tareasSeleccionadas.join(', ');
         }
-        
-        document.getElementById('activityHombres').value = formData.participantesHombres;
-        document.getElementById('activityMujeres').value = formData.participantesMujeres;
-        document.getElementById('activityResultados').value = formData.resultados || '';
-        document.getElementById('activityObservaciones').value = formData.observaciones || '';
+
+        return data;
     }
 
-    llenarModalDetalles(actividad) {
-        const fechaFormateada = new Date(actividad.fecha).toLocaleDateString('es-SV');
-        
-        document.getElementById('detailFecha').textContent = fechaFormateada;
-        document.getElementById('detailActividad').textContent = actividad.actividad_nombre;
-        document.getElementById('detailEstado').textContent = this.obtenerTextoEstado(actividad.estado);
-        document.getElementById('detailEstado').className = `status-badge ${this.obtenerClaseEstado(actividad.estado)}`;
-        document.getElementById('detailHoraInicio').textContent = actividad.H_inicio;
-        document.getElementById('detailHoraFin').textContent = actividad.H_Fin;
-        document.getElementById('detailRegion').textContent = actividad.region;
-        document.getElementById('detailDepartamento').textContent = actividad.departamento;
-        document.getElementById('detailMunicipio').textContent = actividad.municipio;
-        document.getElementById('detailDistrito').textContent = actividad.distrito;
-        document.getElementById('detailTecnico').textContent = `Usuario ${actividad.Id_Usuario}`;
-        document.getElementById('detailUsuario').textContent = `Usuario ${actividad.Id_Usuario}`;
-        
-        // Mostrar tareas
-        const tareasContainer = document.getElementById('detailTareas');
-        if (tareasContainer) {
-            tareasContainer.innerHTML = '';
-            if (actividad.tarea) {
-                const tareas = actividad.tarea.split(', ');
-                tareas.forEach(tarea => {
-                    const tareaElement = document.createElement('div');
-                    tareaElement.className = 'tarea-item';
-                    tareaElement.innerHTML = `<i class="fas fa-check-circle"></i> ${tarea}`;
-                    tareasContainer.appendChild(tareaElement);
-                });
+    cargarSelectsDependientes(departamento, distrito, municipio) {
+        this.cargarMunicipios(departamento);
+        setTimeout(() => {
+            if (municipio) {
+                document.getElementById('activityMunicipio').value = municipio;
+                this.cargarDistritos(municipio);
+                setTimeout(() => {
+                    if (distrito) {
+                        document.getElementById('activityDistrito').value = distrito;
+                    }
+                }, 100);
             }
-        }
+        }, 100);
+    }
+
+    cargarMunicipios(departamento) {
+        const municipioSelect = document.getElementById('activityMunicipio');
+        if (!municipioSelect) return;
+
+        municipioSelect.innerHTML = '<option value="">Seleccione municipio</option>';
         
-        document.getElementById('detailHombres').textContent = actividad.hombres || 0;
-        document.getElementById('detailMujeres').textContent = actividad.mujeres || 0;
-        document.getElementById('detailResultados').textContent = actividad.resultados || 'No hay resultados registrados';
-        document.getElementById('detailObservaciones').textContent = actividad.observaciones || 'No hay observaciones registradas';
-        document.getElementById('detailFechaRegistro').textContent = fechaFormateada;
+        // Simulación de datos - en una implementación real esto vendría de un servicio
+        const municipiosData = {
+            'San Salvador': ['San Salvador', 'Soyapango', 'Santa Tecla', 'Mejicanos'],
+            'La Libertad': ['Santa Tecla', 'Antiguo Cuscatlán', 'Zaragoza', 'Quezaltepeque'],
+            'Santa Ana': ['Santa Ana', 'Chalchuapa', 'Metapán', 'Coatepeque']
+        };
+
+        const municipios = municipiosData[departamento] || [];
+        municipios.forEach(municipio => {
+            const option = document.createElement('option');
+            option.value = municipio;
+            option.textContent = municipio;
+            municipioSelect.appendChild(option);
+        });
     }
 
-    validarFormulario(formData) {
-        if (!formData.fecha || !formData.actividad || !formData.departamento || !formData.region) {
-            this.mostrarError('Error', 'Por favor complete todos los campos obligatorios');
-            return false;
+    cargarDistritos(municipio) {
+        const distritoSelect = document.getElementById('activityDistrito');
+        if (!distritoSelect) return;
+
+        distritoSelect.innerHTML = '<option value="">Seleccione distrito</option>';
+        
+        // Simulación de datos - en una implementación real esto vendría de un servicio
+        const distritosData = {
+            'San Salvador': ['Centro', 'San Jacinto', 'Candelaria', 'San Esteban'],
+            'Soyapango': ['Centro', 'San Antonio', 'El Progreso', 'Santa Lucía'],
+            'Santa Tecla': ['Centro', 'San Luis', 'Santa Anita', 'El Carmen']
+        };
+
+        const distritos = distritosData[municipio] || [];
+        distritos.forEach(distrito => {
+            const option = document.createElement('option');
+            option.value = distrito;
+            option.textContent = distrito;
+            distritoSelect.appendChild(option);
+        });
+    }
+
+    mostrarModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'block';
+            modal.classList.add('show');
         }
-        return true;
     }
 
-    limpiarFormularioActividad() {
-        const form = document.getElementById('activityForm');
-        if (form) {
-            form.reset();
-            document.getElementById('activityId').value = '';
-            document.getElementById('modalActivityTitle').textContent = 'Registrar Nueva Actividad';
-            
-            // Limpiar selects dependientes
-            const distritoSelect = document.getElementById('activityDistrito');
-            const municipioSelect = document.getElementById('activityMunicipio');
-            if (distritoSelect) distritoSelect.innerHTML = '<option value="">SELECCIONE UN DISTRITO</option>';
-            if (municipioSelect) municipioSelect.innerHTML = '<option value="">SELECCIONE UN MUNICIPIO</option>';
+    ocultarModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('show');
         }
     }
 
-    aplicarFiltrosActividades() {
-        // Por ahora recargamos todas las actividades
-        // En una implementación completa, esto filtraría en el backend
+    actualizarPaginacion(response) {
+        const paginationContainer = document.getElementById('activitiesPagination');
+        if (!paginationContainer) return;
+
+        const totalPages = response.totalPages || 0;
+        
+        if (totalPages <= 1) {
+            paginationContainer.innerHTML = '';
+            return;
+        }
+
+        let paginationHTML = '';
+        
+        // Botón anterior
+        paginationHTML += `
+            <button class="pagination-btn ${this.currentPage === 0 ? 'disabled' : ''}" 
+                    ${this.currentPage === 0 ? 'disabled' : ''}
+                    onclick="actividadController.cambiarPagina(${this.currentPage - 1})">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        `;
+
+        // Páginas
+        for (let i = 0; i < totalPages; i++) {
+            paginationHTML += `
+                <button class="pagination-btn ${this.currentPage === i ? 'active' : ''}" 
+                        onclick="actividadController.cambiarPagina(${i})">
+                    ${i + 1}
+                </button>
+            `;
+        }
+
+        // Botón siguiente
+        paginationHTML += `
+            <button class="pagination-btn ${this.currentPage === totalPages - 1 ? 'disabled' : ''}" 
+                    ${this.currentPage === totalPages - 1 ? 'disabled' : ''}
+                    onclick="actividadController.cambiarPagina(${this.currentPage + 1})">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        `;
+
+        paginationContainer.innerHTML = paginationHTML;
+    }
+
+    cambiarPagina(page) {
+        this.currentPage = page;
         this.cargarActividades();
     }
 
-    limpiarFiltros() {
-        const filterDate = document.getElementById('filterDate');
-        const filterActivity = document.getElementById('filterActivity');
-        const filterRegion = document.getElementById('filterRegion');
-        const filterStatus = document.getElementById('filterStatus');
-        
-        if (filterDate) filterDate.value = '';
-        if (filterActivity) filterActivity.value = '';
-        if (filterRegion) filterRegion.value = '';
-        if (filterStatus) filterStatus.value = '';
-        
-        this.aplicarFiltrosActividades();
-    }
-
-    cargarDatosGeograficos(departamento, distritoSeleccionado = '', municipioSeleccionado = '') {
-        const datos = window.datosGeograficos ? window.datosGeograficos[departamento?.toLowerCase()] : null;
-        const distritoSelect = document.getElementById('activityDistrito');
-        const municipioSelect = document.getElementById('activityMunicipio');
-        
-        if (datos && distritoSelect && municipioSelect) {
-            // Cargar distritos
-            distritoSelect.innerHTML = '<option value="">SELECCIONE UN DISTRITO</option>';
-            datos.distritos.forEach(distrito => {
-                const option = document.createElement('option');
-                option.value = distrito;
-                option.textContent = distrito;
-                option.selected = distrito === distritoSeleccionado;
-                distritoSelect.appendChild(option);
-            });
-            
-            // Cargar municipios
-            municipioSelect.innerHTML = '<option value="">SELECCIONE UN MUNICIPIO</option>';
-            datos.municipios.forEach(municipio => {
-                const option = document.createElement('option');
-                option.value = municipio;
-                option.textContent = municipio;
-                option.selected = municipio === municipioSeleccionado;
-                municipioSelect.appendChild(option);
-            });
-        } else if (distritoSelect && municipioSelect) {
-            // Limpiar selects si no hay datos
-            distritoSelect.innerHTML = '<option value="">SELECCIONE UN DISTRITO</option>';
-            municipioSelect.innerHTML = '<option value="">SELECCIONE UN MUNICIPIO</option>';
+    createLoadingIndicator() {
+        let loadingDiv = document.getElementById('activitiesLoading');
+        if (!loadingDiv) {
+            loadingDiv = document.createElement('div');
+            loadingDiv.id = 'activitiesLoading';
+            loadingDiv.className = 'loading-indicator';
+            loadingDiv.innerHTML = `
+                <div class="loading-spinner"></div>
+                <p>Cargando actividades...</p>
+            `;
         }
+        return loadingDiv;
     }
 
-    obtenerClaseEstado(estado) {
-        switch(estado?.toLowerCase()) {
-            case 'completada': return 'status-active';
-            case 'en progreso': return 'status-pending';
-            case 'pendiente': return 'status-inactive';
-            case 'cancelada': return 'status-inactive';
-            default: return 'status-inactive';
-        }
-    }
-
-    obtenerTextoEstado(estado) {
-        switch(estado?.toLowerCase()) {
-            case 'completada': return 'Completada';
-            case 'en progreso': return 'En Progreso';
-            case 'pendiente': return 'Pendiente';
-            case 'cancelada': return 'Cancelada';
-            default: return estado || 'Desconocido';
-        }
-    }
-
-    actualizarPaginacionActividades(totalItems) {
-        const totalPages = Math.ceil(totalItems / this.pageSize);
-        const showingStart = (this.currentPage * this.pageSize) + 1;
-        const showingEnd = Math.min((this.currentPage + 1) * this.pageSize, totalItems);
-        
-        const fromElement = document.getElementById('activitiesFrom');
-        const toElement = document.getElementById('activitiesTo');
-        const totalElement = document.getElementById('activitiesTotal');
-        
-        if (fromElement) fromElement.textContent = showingStart;
-        if (toElement) toElement.textContent = showingEnd;
-        if (totalElement) totalElement.textContent = totalItems;
-        
-        this.actualizarControlesPaginacion('activitiesPagination', totalPages);
-    }
-
-    actualizarControlesPaginacion(paginationId, totalPages) {
-        const paginationControls = document.getElementById(paginationId);
-        if (!paginationControls) return;
-
-        paginationControls.innerHTML = '';
-        
-        // Botón anterior
-        const prevBtn = document.createElement('button');
-        prevBtn.className = 'pagination-btn';
-        prevBtn.innerHTML = 'Anterior';
-        prevBtn.disabled = this.currentPage === 0;
-        prevBtn.addEventListener('click', () => {
-            if (this.currentPage > 0) {
-                this.currentPage--;
-                this.cargarActividades();
-            }
-        });
-        paginationControls.appendChild(prevBtn);
-        
-        // Números de página
-        const maxPagesToShow = 5;
-        let startPage = Math.max(0, this.currentPage - Math.floor(maxPagesToShow / 2));
-        let endPage = Math.min(totalPages - 1, startPage + maxPagesToShow - 1);
-        
-        if (endPage - startPage + 1 < maxPagesToShow) {
-            startPage = Math.max(0, endPage - maxPagesToShow + 1);
-        }
-        
-        for (let i = startPage; i <= endPage; i++) {
-            const pageBtn = document.createElement('button');
-            pageBtn.className = `pagination-btn ${i === this.currentPage ? 'active' : ''}`;
-            pageBtn.textContent = i + 1;
-            pageBtn.addEventListener('click', () => {
-                this.currentPage = i;
-                this.cargarActividades();
-            });
-            paginationControls.appendChild(pageBtn);
-        }
-        
-        // Botón siguiente
-        const nextBtn = document.createElement('button');
-        nextBtn.className = 'pagination-btn';
-        nextBtn.innerHTML = 'Siguiente';
-        nextBtn.disabled = this.currentPage === totalPages - 1;
-        nextBtn.addEventListener('click', () => {
-            if (this.currentPage < totalPages - 1) {
-                this.currentPage++;
-                this.cargarActividades();
-            }
-        });
-        paginationControls.appendChild(nextBtn);
-    }
-
-    crearEstadoVacio(tipo) {
-        const icon = tipo === 'actividades' ? 'fa-clipboard-list' : 'fa-users';
-        const mensaje = tipo === 'actividades' ? 'No hay actividades registradas' : 'No se encontraron usuarios';
-        const submensaje = tipo === 'actividades' ? 'Comience registrando una nueva actividad' : 'Intente ajustar los filtros de búsqueda';
-        
-        return `
-            <tr>
-                <td colspan="8" class="empty-state">
-                    <i class="fas ${icon}"></i>
-                    <h3>${mensaje}</h3>
-                    <p>${submensaje}</p>
-                </td>
-            </tr>
-        `;
-    }
-
-    crearEstadoError() {
-        return `
-            <tr>
-                <td colspan="8" class="empty-state">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <h3>Error al cargar los datos</h3>
-                    <p>Intente recargar la página</p>
-                </td>
-            </tr>
-        `;
-    }
-
-    mostrarMensaje(titulo, texto, icono) {
+    showSuccess(message) {
         Swal.fire({
-            title: titulo,
-            text: texto,
-            icon: icono,
+            title: 'Éxito',
+            text: message,
+            icon: 'success',
             confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#2d3748'
+            confirmButtonColor: '#38a169'
         });
     }
 
-    mostrarError(titulo, texto) {
+    showError(message) {
         Swal.fire({
-            title: titulo,
-            text: texto,
+            title: 'Error',
+            text: message,
             icon: 'error',
             confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#2d3748'
+            confirmButtonColor: '#e53e3e'
         });
+    }
+
+    // Métodos auxiliares
+    getEstadoClass(estado) {
+        const estados = {
+            'Completada': 'status-active',
+            'En Progreso': 'status-pending',
+            'Pendiente': 'status-inactive',
+            'Cancelada': 'status-inactive'
+        };
+        return estados[estado] || 'status-inactive';
+    }
+
+    getEstadoText(estado) {
+        const estados = {
+            'Completada': 'Completada',
+            'En Progreso': 'En Progreso',
+            'Pendiente': 'Pendiente',
+            'Cancelada': 'Cancelada'
+        };
+        return estados[estado] || estado;
+    }
+
+    formatDate(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-SV');
+    }
+
+    getNombreTecnico(userId) {
+        const tecnicos = {
+            1: 'Juan Pérez García',
+            2: 'María Rodríguez López',
+            3: 'Carlos Hernández Martínez',
+            4: 'Ana María Castillo',
+            5: 'Luis Fernando Ramirez'
+        };
+        return tecnicos[userId] || 'Técnico Asignado';
+    }
+
+    getNombreUsuario(userId) {
+        const usuarios = {
+            1: 'admin@proteccioncivil.gob.sv',
+            2: 'tecnico@proteccioncivil.gob.sv',
+            3: 'supervisor@proteccioncivil.gob.sv',
+            4: 'coordinador@proteccioncivil.gob.sv',
+            5: 'monitor@proteccioncivil.gob.sv'
+        };
+        return usuarios[userId] || 'Usuario Sistema';
     }
 }
 
-// Instancia global del controller
-const actividadController = new ActividadController();
+// Inicializar el controlador cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    window.actividadController = new ActividadController();
+});

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Usuarios | Protección Civil</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="CSS/usuarios.css">
+</head>
+<body>
+    <div class="users-module">
+        <div class="content-header">
+            <div class="page-title">
+                <h2>Gestión de Usuarios</h2>
+                <p>Administre los usuarios del sistema</p>
+            </div>
+            <div class="page-actions">
+                <button class="btn btn-primary" id="newUserBtn">
+                    <i class="fas fa-plus-circle"></i>
+                    Nuevo Usuario
+                </button>
+                <div class="export-options">
+                    <button class="btn btn-secondary">
+                        <i class="fas fa-download"></i>
+                        Exportar
+                    </button>
+                    <div class="export-dropdown">
+                        <button class="export-option" data-format="excel">
+                            <i class="fas fa-file-excel"></i>
+                            Excel
+                        </button>
+                        <button class="export-option" data-format="pdf">
+                            <i class="fas fa-file-pdf"></i>
+                            PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="filter-section">
+            <div class="filter-row">
+                <div class="form-group">
+                    <label for="searchUser">Buscar Usuario</label>
+                    <input type="text" id="searchUser" class="form-control" placeholder="Buscar por nombre o email...">
+                </div>
+                <div class="form-group">
+                    <label for="filterRole">Filtrar por Rol</label>
+                    <select id="filterRole" class="form-control">
+                        <option value="">Todos los roles</option>
+                        <option value="Administrador">Administrador</option>
+                        <option value="Coordinador">Coordinador</option>
+                        <option value="Supervisor">Supervisor</option>
+                        <option value="Técnico">Técnico</option>
+                        <option value="Monitor">Monitor</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="filterStatus">Filtrar por Estado</label>
+                    <select id="filterStatus" class="form-control">
+                        <option value="">Todos los estados</option>
+                        <option value="activo">Activo</option>
+                        <option value="inactivo">Inactivo</option>
+                    </select>
+                </div>
+            </div>
+            <div class="filter-actions">
+                <button class="btn btn-secondary" id="clearFilters">
+                    <i class="fas fa-times"></i>
+                    Limpiar Filtros
+                </button>
+                <button class="btn btn-primary" id="applyFilters">
+                    <i class="fas fa-filter"></i>
+                    Aplicar Filtros
+                </button>
+            </div>
+        </div>
+        
+        <div class="table-container users-container">
+            <div class="table-header">
+                <div class="table-title">Lista de Usuarios</div>
+                <div class="table-actions">
+                    <span class="table-info">Total: <strong id="usersTotal">0</strong> usuarios</span>
+                </div>
+            </div>
+            <div class="table-scroll-wrapper">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Teléfono</th>
+                            <th>Rol</th>
+                            <th>Región</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <!-- Los usuarios se cargarán aquí dinámicamente desde la API -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination">
+                <div class="pagination-info">
+                    Mostrando <span id="usersShowing">0</span> de <span id="usersTotal">0</span> usuarios
+                </div>
+                <div class="pagination-controls" id="usersPagination">
+                    <!-- Controles de paginación se cargarán aquí -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal para nuevo usuario -->
+        <div class="modal" id="userModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="modalUserTitle">Nuevo Usuario</h3>
+                    <button class="modal-close" id="closeUserModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="userForm">
+                        <input type="hidden" id="userId">
+                        <div class="form-section">
+                            <h2 class="section-title">
+                                <i class="fas fa-user"></i>
+                                Información Personal
+                            </h2>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="modalNombres" class="required">Nombres Completos</label>
+                                    <input type="text" id="modalNombres" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="modalTelefono" class="required">Teléfono</label>
+                                    <input type="tel" id="modalTelefono" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="modalEmail" class="required">Correo Electrónico</label>
+                                    <input type="email" id="modalEmail" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="modalUnidad" class="required">Unidad Organizacional</label>
+                                    <input type="text" id="modalUnidad" class="form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h2 class="section-title">
+                                <i class="fas fa-key"></i>
+                                Credenciales de Acceso
+                            </h2>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="modalPassword" id="labelPassword" class="required">Contraseña</label>
+                                    <input type="password" id="modalPassword" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="modalConfirmPassword" id="labelConfirmPassword" class="required">Confirmar Contraseña</label>
+                                    <input type="password" id="modalConfirmPassword" class="form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h2 class="section-title">
+                                <i class="fas fa-user-shield"></i>
+                                Configuración de Permisos
+                            </h2>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="modalRol" class="required">Rol de Usuario</label>
+                                    <select id="modalRol" class="form-control" required>
+                                        <option value="">Seleccione un rol</option>
+                                        <option value="Administrador">Administrador</option>
+                                        <option value="Coordinador">Coordinador</option>
+                                        <option value="Supervisor">Supervisor</option>
+                                        <option value="Técnico">Técnico</option>
+                                        <option value="Monitor">Monitor</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="modalRegion" class="required">Región Asignada</label>
+                                    <select id="modalRegion" class="form-control" required>
+                                        <option value="">Seleccione una región</option>
+                                        <option value="Central">Central</option>
+                                        <option value="Paracentral">Paracentral</option>
+                                        <option value="Oriental">Oriental</option>
+                                        <option value="Occidental">Occidental</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h2 class="section-title">
+                                <i class="fas fa-map-marker-alt"></i>
+                                Ubicación Geográfica
+                            </h2>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="modalDepartamento" class="required">Departamento</label>
+                                    <select id="modalDepartamento" class="form-control" required>
+                                        <option value="">Seleccione un departamento</option>
+                                        <option value="Asunción">Asunción</option>
+                                        <option value="Alto Paraná">Alto Paraná</option>
+                                        <option value="San Pedro">San Pedro</option>
+                                        <option value="Itapúa">Itapúa</option>
+                                        <option value="Boquerón">Boquerón</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="modalMunicipio" class="required">Municipio</label>
+                                    <select id="modalMunicipio" class="form-control" required>
+                                        <option value="">Seleccione un municipio</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="modalDistrito" class="required">Distrito</label>
+                                    <select id="modalDistrito" class="form-control" required>
+                                        <option value="">Seleccione un distrito</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="modalFiltrado">Configuración de Filtrado</label>
+                                    <select id="modalFiltrado" class="form-control">
+                                        <option value="No Aplica">NO APLICA</option>
+                                        <option value="Region">FILTRO REGIONAL</option>
+                                        <option value="Departamento">FILTRO DEPARTAMENTAL</option>
+                                        <option value="Municipio">FILTRO MUNICIPAL</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <div class="modal-footer">
+                                <div class="footer-buttons">
+                                    <button type="button" class="btn-clear" id="clearUserForm">
+                                        <i class="fas fa-broom"></i>
+                                        Limpiar Formulario
+                                    </button>
+                                    <div class="modal-action-buttons">
+                                        <button type="button" class="btn-cancel" id="cancelUserForm">
+                                            <i class="fas fa-times"></i>
+                                            Cancelar
+                                        </button>
+                                        <button type="submit" class="btn-save">
+                                            <i class="fas fa-save"></i>
+                                            Guardar Usuario
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/services/usuarioService.js"></script>
+    <script src="js/controllers/usuarioController.js"></script>
+    <script>
+        // Inicializar el módulo de usuarios cuando se carga la página
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof usuarioController === 'undefined') {
+                usuarioController = new UsuarioController();
+            }
+        });
+    </script>
+</body>
+</html>
