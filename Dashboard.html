@@ -71,7 +71,7 @@
                     </div>
                     <div class="stat-info">
                         <h3>Actividades</h3>
-                        <span class="stat-number">0</span>
+                        <span class="stat-number" id="statActividades">0</span>
                         <span class="stat-text">Registradas</span>
                     </div>
                 </div>
@@ -82,59 +82,43 @@
                     </div>
                     <div class="stat-info">
                         <h3>Usuarios</h3>
-                        <span class="stat-number">0</span>
+                        <span class="stat-number" id="statUsuarios">0</span>
                         <span class="stat-text">Activos</span>
                     </div>
                 </div>
                 
                 <div class="stat-card">
                     <div class="stat-icon">
-                        <i class="fas fa-map-marker-alt"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3>Regiones</h3>
-                        <span class="stat-number">5</span>
-                        <span class="stat-text">Activas</span>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon">
                         <i class="fas fa-check-circle"></i>
                     </div>
                     <div class="stat-info">
                         <h3>Completadas</h3>
-                        <span class="stat-number">0</span>
-                        <span class="stat-text">Actividades</span>
+                        <span class="stat-number" id="statCompletadas">0</span>
+                        <span class="stat-text">Este mes</span>
                     </div>
-                </div>
-            </div>
-
-            <!-- Modo Offline Indicator -->
-            <div class="offline-indicator" id="offlineIndicator" style="display: none;">
-                <div class="offline-warning">
-                    <i class="fas fa-wifi-slash"></i>
-                    <span>Modo offline activado - Datos de demostración</span>
                 </div>
             </div>
         </div>
 
         <!-- Sección de Actividades -->
         <div class="activities-content" id="activitiesContent">
-            <!-- Se carga dinámicamente desde activities.html -->
+            <!-- Contenido de actividades se carga dinámicamente -->
         </div>
 
         <!-- Sección de Usuarios -->
         <div class="users-content" id="usersContent">
-            <!-- Se carga dinámicamente desde users.html -->
+            <!-- Contenido de usuarios se carga dinámicamente -->
         </div>
     </div>
-
+    
     <!-- Scripts -->
-    <script src="js/services/actividadService.js"></script>
-    <script src="js/services/usuarioService.js"></script>
-    <script src="js/controllers/actividadController.js"></script>
-    <script src="js/controllers/usuarioController.js"></script>
-    <script src="js/dashboard.js"></script>
+    <script src="JS/config.js"></script>
+    <script src="JS/Services/usuarioService.js"></script>
+    <script src="JS/Services/actividadService.js"></script>
+    <script src="JS/Controllers/actividadController.js"></script>
+    <script src="JS/Controllers/usuarioController.js"></script>
+    <script src="JS/usuarios.js"></script>
+    <script src="JS/actividades.js"></script>
+    <script src="JS/dashboard.js"></script>
 </body>
 </html>

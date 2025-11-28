@@ -7,19 +7,33 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
     // Simulación de autenticación
     if (email && password) {
         Swal.fire({
-            title: '¡Éxito!',
-            text: 'Inicio de sesión exitoso',
-            icon: 'success',
-            confirmButtonText: 'Continuar',
-            confirmButtonColor: '#2d3748'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Guardar sesión y redirigir al dashboard
-                localStorage.setItem('isAuthenticated', 'true');
-                localStorage.setItem('userEmail', email);
-                window.location.href = 'dashboard.html';
+            title: 'Autenticando...',
+            text: 'Por favor espere',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
             }
         });
+        
+        // Simular tiempo de autenticación
+        setTimeout(() => {
+            Swal.fire({
+                title: '¡Éxito!',
+                text: 'Inicio de sesión exitoso',
+                icon: 'success',
+                confirmButtonText: 'Continuar',
+                confirmButtonColor: '#2d3748',
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => {
+                // Guardar sesión
+                localStorage.setItem('isAuthenticated', 'true');
+                localStorage.setItem('userEmail', email);
+                
+                // Redirigir a la pantalla de carga
+                window.location.href = 'dashboard.html';
+            });
+        }, 1000);
     } else {
         Swal.fire({
             title: 'Error',
@@ -58,7 +72,7 @@ recoveryMethods.forEach(method => {
     });
 });
 
-// Verificar si ya está autenticado
+// Verificar si ya está autenticado y redirigir a loading
 if (localStorage.getItem('isAuthenticated') === 'true') {
-    window.location.href = 'dashboard.html';
+    window.location.href = 'cargandoAPI.html';
 }

@@ -1,4 +1,3 @@
-// JS/dashboard.js - ACTUALIZADO
 // Verificar autenticación
 if (localStorage.getItem('isAuthenticated') !== 'true') {
     window.location.href = 'index.html';
@@ -21,35 +20,25 @@ document.addEventListener('DOMContentLoaded', function() {
 // Función para cargar estadísticas
 async function cargarEstadisticas() {
     try {
-        const actividadService = new ActividadService();
-        const usuarioService = new UsuarioService();
-        
-        const [actividadesResponse, usuariosResponse] = await Promise.all([
-            actividadService.getAllActividades(0, 1000),
-            usuarioService.getAllUsuarios(0, 1000)
-        ]);
-        
-        const totalActividades = actividadesResponse.totalElements || 0;
+        // Obtener estadísticas de usuarios
+        const usuariosResponse = await UsuarioService.getAllUsuarios(0, 1);
         const totalUsuarios = usuariosResponse.totalElements || 0;
-        const actividadesCompletadas = actividadesResponse.content ? 
-            actividadesResponse.content.filter(a => a.estado === 'Completada').length : 0;
+        document.getElementById('statUsuarios').textContent = totalUsuarios;
         
-        // Actualizar tarjetas de estadísticas
-        const statNumbers = document.querySelectorAll('.stat-number');
-        if (statNumbers.length >= 3) {
-            statNumbers[0].textContent = totalActividades;
-            statNumbers[1].textContent = totalUsuarios;
-            statNumbers[2].textContent = actividadesCompletadas;
-        }
+        // Obtener estadísticas de actividades
+        const actividadesResponse = await ActividadService.getAllActividades(0, 1);
+        const totalActividades = actividadesResponse.totalElements || 0;
+        document.getElementById('statActividades').textContent = totalActividades;
+        
+        // Obtener todas las actividades para contar completadas
+        const todasActividades = await ActividadService.getAllActividades(0, 100);
+        const actividadesCompletadas = (todasActividades.content || []).filter(
+            act => (act.estado || '').toLowerCase() === 'completada'
+        ).length;
+        document.getElementById('statCompletadas').textContent = actividadesCompletadas;
+        
     } catch (error) {
         console.error('Error al cargar estadísticas:', error);
-        // Usar valores por defecto en caso de error
-        const statNumbers = document.querySelectorAll('.stat-number');
-        if (statNumbers.length >= 3) {
-            statNumbers[0].textContent = '0';
-            statNumbers[1].textContent = '0';
-            statNumbers[2].textContent = '0';
-        }
     }
 }
 
@@ -80,10 +69,8 @@ function setupNavigation() {
                 if (!document.querySelector('#activitiesContent .table-container')) {
                     loadActivitiesModule();
                 } else {
-                    // Si ya está cargado, recargar los datos
-                    if (typeof actividadController !== 'undefined') {
-                        actividadController.cargarActividades();
-                    }
+                    // Recargar actividades al cambiar a la pestaña
+                    cargarActividades();
                 }
             } else if (target === 'users') {
                 document.getElementById('usersContent').classList.add('active');
@@ -91,10 +78,8 @@ function setupNavigation() {
                 if (!document.querySelector('#usersContent .table-container')) {
                     loadUsersModule();
                 } else {
-                    // Si ya está cargado, recargar los datos
-                    if (typeof usuarioController !== 'undefined') {
-                        usuarioController.cargarUsuarios();
-                    }
+                    // Recargar usuarios al cambiar a la pestaña
+                    cargarUsuarios();
                 }
             } else {
                 document.getElementById('welcomeContent').classList.add('active');
@@ -133,7 +118,6 @@ function loadActivitiesModule() {
         return;
     }
     
-    // Cargar el HTML del módulo de actividades (mantener el mismo HTML que tenías)
     activitiesContent.innerHTML = `
         <div class="content-header">
             <div class="page-title">
@@ -185,21 +169,18 @@ function loadActivitiesModule() {
                     <label for="filterRegion">Región</label>
                     <select id="filterRegion" class="form-control">
                         <option value="">Todas las regiones</option>
-                        <option value="Central">Central</option>
-                        <option value="Este">Este</option>
-                        <option value="Norte">Norte</option>
-                        <option value="Sur">Sur</option>
-                        <option value="Oeste">Oeste</option>
+                        <option value="occidental">OCCIDENTAL</option>
+                        <option value="central">CENTRAL</option>
+                        <option value="oriental">ORIENTAL</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="filterStatus">Estado</label>
                     <select id="filterStatus" class="form-control">
                         <option value="">Todos los estados</option>
-                        <option value="Completada">Completada</option>
-                        <option value="En Progreso">En Progreso</option>
-                        <option value="Pendiente">Pendiente</option>
-                        <option value="Cancelada">Cancelada</option>
+                        <option value="completada">Completada</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="en-progreso">En Progreso</option>
                     </select>
                 </div>
             </div>
@@ -230,20 +211,24 @@ function loadActivitiesModule() {
                 <table class="activities-table">
                     <thead>
                         <tr>
+                            <th>Unidad</th>
                             <th>Fecha</th>
                             <th>Actividad</th>
                             <th>Departamento</th>
                             <th>Municipio</th>
-                            <th>Distrito</th>
+                            <th>Técnico</th>
                             <th>Usuario</th>
                             <th>Estado</th>
                             <th>Opciones</th>
                         </tr>
                     </thead>
                     <tbody id="activitiesTableBody">
-                        <!-- Las actividades se cargarán aquí dinámicamente desde la API -->
+                        <!-- Las actividades se cargarán aquí dinámicamente -->
                     </tbody>
                 </table>
+            </div>
+            <div class="scroll-indicator">
+                <i class="fas fa-arrows-left-right"></i> Desplazar horizontalmente
             </div>
             <div class="pagination">
                 <div class="pagination-info">
@@ -272,13 +257,32 @@ function loadActivitiesModule() {
                             </h2>
                             <div class="form-row">
                                 <div class="form-group">
+                                    <label for="activityUnidad" class="required">Unidad</label>
+                                    <select id="activityUnidad" class="form-control" required>
+                                        <option value="">Seleccione una unidad</option>
+                                        <option value="Unidad Central">Unidad Central</option>
+                                        <option value="Unidad Regional Occidental">Unidad Regional Occidental</option>
+                                        <option value="Unidad Regional Central">Unidad Regional Central</option>
+                                        <option value="Unidad Regional Oriental">Unidad Regional Oriental</option>
+                                        <option value="Unidad Técnica">Unidad Técnica</option>
+                                        <option value="Unidad Operativa">Unidad Operativa</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="activityTecnico" class="required">Técnico Responsable</label>
+                                    <select id="activityTecnico" class="form-control" required>
+                                        <option value="">Seleccione un técnico</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
                                     <label for="activityEstado" class="required">Estado</label>
                                     <select id="activityEstado" class="form-control" required>
                                         <option value="">SELECCIONE</option>
-                                        <option value="Completada">Completada</option>
-                                        <option value="En Progreso">En Progreso</option>
-                                        <option value="Pendiente">Pendiente</option>
-                                        <option value="Cancelada">Cancelada</option>
+                                        <option value="completada">Completada</option>
+                                        <option value="pendiente">Pendiente</option>
+                                        <option value="en-progreso">En Progreso</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -308,22 +312,21 @@ function loadActivitiesModule() {
                                     <label for="activityRegion" class="required">Región</label>
                                     <select id="activityRegion" class="form-control" required>
                                         <option value="">SELECCIONE UNA REGIÓN</option>
-                                        <option value="Central">Central</option>
-                                        <option value="Este">Este</option>
-                                        <option value="Norte">Norte</option>
-                                        <option value="Sur">Sur</option>
-                                        <option value="Oeste">Oeste</option>
+                                        <option value="occidental">OCCIDENTAL</option>
+                                        <option value="central">CENTRAL</option>
+                                        <option value="oriental">ORIENTAL</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <label for="activityDepartamento" class="required">Departamento</label>
                                     <select id="activityDepartamento" class="form-control" required>
                                         <option value="">SELECCIONE UN DEPARTAMENTO</option>
-                                        <option value="Asunción">Asunción</option>
-                                        <option value="Alto Paraná">Alto Paraná</option>
-                                        <option value="San Pedro">San Pedro</option>
-                                        <option value="Itapúa">Itapúa</option>
-                                        <option value="Boquerón">Boquerón</option>
+                                        <option value="ahuachapan">AHUACHAPAN</option>
+                                        <option value="santa-ana">SANTA ANA</option>
+                                        <option value="sonsonate">SONSONATE</option>
+                                        <option value="san-salvador">SAN SALVADOR</option>
+                                        <option value="la-libertad">LA LIBERTAD</option>
+                                        <option value="san-miguel">SAN MIGUEL</option>
                                     </select>
                                 </div>
                             </div>
@@ -332,7 +335,6 @@ function loadActivitiesModule() {
                                     <label for="activityMunicipio" class="required">Municipio</label>
                                     <select id="activityMunicipio" class="form-control" required>
                                         <option value="">SELECCIONE UN MUNICIPIO</option>
-                                        <option value="San Salvador">San Salvador</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -354,12 +356,12 @@ function loadActivitiesModule() {
                                     <label for="activityTipo" class="required">Tipo de Actividad</label>
                                     <select id="activityTipo" class="form-control" required>
                                         <option value="">SELECCIONE</option>
-                                        <option value="Capacitación en Liderazgo">Capacitación en Liderazgo</option>
-                                        <option value="Reunión de Coordinación">Reunión de Coordinación</option>
-                                        <option value="Visita de Supervisión">Visita de Supervisión</option>
-                                        <option value="Taller Comunitario">Taller Comunitario</option>
-                                        <option value="Monitoreo de Campo">Monitoreo de Campo</option>
-                                        <option value="Evaluación de Proyectos">Evaluación de Proyectos</option>
+                                        <option value="Capacitación en Primeros Auxilios">Capacitación en Primeros Auxilios</option>
+                                        <option value="Simulacro de Evacuación">Simulacro de Evacuación</option>
+                                        <option value="Inspección de Infraestructura">Inspección de Infraestructura</option>
+                                        <option value="Evaluación de Riesgos">Evaluación de Riesgos</option>
+                                        <option value="Coordinación Interinstitucional">Coordinación Interinstitucional</option>
+                                        <option value="Taller de Prevención">Taller de Prevención</option>
                                     </select>
                                 </div>
                             </div>
@@ -367,12 +369,12 @@ function loadActivitiesModule() {
                                 <div class="form-group full-width">
                                     <label for="activityTareas">Tareas (Puedes seleccionar varias)</label>
                                     <select id="activityTareas" class="form-control" multiple>
-                                        <option value="Planificación">Planificación</option>
-                                        <option value="Coordinación">Coordinación</option>
-                                        <option value="Ejecución">Ejecución</option>
-                                        <option value="Evaluación">Evaluación</option>
-                                        <option value="Seguimiento">Seguimiento</option>
-                                        <option value="Reporte">Reporte</option>
+                                        <option value="tarea1">Tarea de preparación</option>
+                                        <option value="tarea2">Coordinación con autoridades</option>
+                                        <option value="tarea3">Ejecución de actividad</option>
+                                        <option value="tarea4">Evaluación de resultados</option>
+                                        <option value="tarea5">Elaboración de informe</option>
+                                        <option value="tarea6">Seguimiento y monitoreo</option>
                                     </select>
                                 </div>
                             </div>
@@ -414,6 +416,35 @@ function loadActivitiesModule() {
                             </div>
                         </div>
                         
+                        <div class="form-section">
+                            <h2 class="section-title">
+                                <i class="fas fa-paperclip"></i>
+                                Documentación
+                            </h2>
+                            <div class="form-row">
+                                <div class="form-group full-width">
+                                    <label for="activityRespaldo">Respaldo (Archivo PDF)</label>
+                                    <div class="file-upload">
+                                        <input type="file" id="activityRespaldo" class="file-upload-input" accept=".pdf">
+                                        <label for="activityRespaldo" class="file-upload-label">
+                                            <span id="fileName">Buscar un Archivo PDF...</span>
+                                            <i class="fas fa-search"></i>
+                                        </label>
+                                    </div>
+                                    <div class="file-preview" id="filePreview">
+                                        <i class="fas fa-file-pdf file-preview-icon"></i>
+                                        <div class="file-preview-info">
+                                            <div class="file-preview-name" id="previewFileName"></div>
+                                            <div class="file-preview-size" id="previewFileSize"></div>
+                                        </div>
+                                        <button type="button" class="file-preview-remove" id="removeFile">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="form-actions">
                             <div class="modal-footer">
                                 <div class="footer-buttons">
@@ -438,159 +469,13 @@ function loadActivitiesModule() {
                 </div>
             </div>
         </div>
-        
-        <!-- Modal: Detalles de la Actividad -->
-        <div class="modal" id="activityDetailModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Detalles de la Actividad</h3>
-                    <button class="modal-close" id="closeActivityDetailModal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="detail-container">
-                        <div class="detail-section">
-                            <h2 class="section-title">
-                                <i class="fas fa-info-circle"></i>
-                                Información General
-                            </h2>
-                            <div class="detail-grid">
-                                <div class="detail-item">
-                                    <label>Fecha:</label>
-                                    <span id="detailFecha">-</span>
-                                </div>
-                                <div class="detail-item">
-                                    <label>Actividad:</label>
-                                    <span id="detailActividad">-</span>
-                                </div>
-                                <div class="detail-item">
-                                    <label>Estado:</label>
-                                    <span id="detailEstado">-</span>
-                                </div>
-                                <div class="detail-item">
-                                    <label>Hora de Inicio:</label>
-                                    <span id="detailHoraInicio">-</span>
-                                </div>
-                                <div class="detail-item">
-                                    <label>Hora de Finalización:</label>
-                                    <span id="detailHoraFin">-</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="detail-section">
-                            <h2 class="section-title">
-                                <i class="fas fa-map"></i>
-                                Ubicación
-                            </h2>
-                            <div class="detail-grid">
-                                <div class="detail-item">
-                                    <label>Región:</label>
-                                    <span id="detailRegion">-</span>
-                                </div>
-                                <div class="detail-item">
-                                    <label>Departamento:</label>
-                                    <span id="detailDepartamento">-</span>
-                                </div>
-                                <div class="detail-item">
-                                    <label>Municipio:</label>
-                                    <span id="detailMunicipio">-</span>
-                                </div>
-                                <div class="detail-item">
-                                    <label>Distrito:</label>
-                                    <span id="detailDistrito">-</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="detail-section">
-                            <h2 class="section-title">
-                                <i class="fas fa-users"></i>
-                                Personal
-                            </h2>
-                            <div class="detail-grid">
-                                <div class="detail-item">
-                                    <label>Técnico:</label>
-                                    <span id="detailTecnico">-</span>
-                                </div>
-                                <div class="detail-item">
-                                    <label>Usuario:</label>
-                                    <span id="detailUsuario">-</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="detail-section">
-                            <h2 class="section-title">
-                                <i class="fas fa-tasks"></i>
-                                Tareas Realizadas
-                            </h2>
-                            <div id="detailTareas" class="tareas-container">
-                                <!-- Las tareas se cargarán aquí dinámicamente -->
-                            </div>
-                        </div>
-                        
-                        <div class="detail-section">
-                            <h2 class="section-title">
-                                <i class="fas fa-user-friends"></i>
-                                Participantes
-                            </h2>
-                            <div class="detail-grid">
-                                <div class="detail-item">
-                                    <label>Hombres:</label>
-                                    <span id="detailHombres">-</span>
-                                </div>
-                                <div class="detail-item">
-                                    <label>Mujeres:</label>
-                                    <span id="detailMujeres">-</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="detail-section">
-                            <h2 class="section-title">
-                                <i class="fas fa-clipboard-check"></i>
-                                Resultados y Observaciones
-                            </h2>
-                            <div class="detail-full">
-                                <div class="detail-item full-width">
-                                    <label>Resultados:</label>
-                                    <div id="detailResultados" class="detail-text">-</div>
-                                </div>
-                                <div class="detail-item full-width">
-                                    <label>Observaciones:</label>
-                                    <div id="detailObservaciones" class="detail-text">-</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="detail-section">
-                            <h2 class="section-title">
-                                <i class="fas fa-calendar-alt"></i>
-                                Información de Registro
-                            </h2>
-                            <div class="detail-grid">
-                                <div class="detail-item">
-                                    <label>Fecha de Registro:</label>
-                                    <span id="detailFechaRegistro">-</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-primary" id="closeDetailBtn">
-                        <i class="fas fa-times"></i>
-                        Cerrar
-                    </button>
-                </div>
-            </div>
-        </div>
     `;
     
-    // Configurar event listeners específicos del módulo
-    if (typeof actividadController !== 'undefined') {
-        actividadController.setupModuleEventListeners();
-        actividadController.cargarActividades();
+    // Inicializar funcionalidad del módulo de actividades
+    if (typeof initializeActivitiesModule === 'function') {
+        initializeActivitiesModule();
+    } else {
+        console.error('initializeActivitiesModule no está disponible');
     }
 }
 
@@ -603,7 +488,6 @@ function loadUsersModule() {
         return;
     }
     
-    // Cargar el HTML del módulo de usuarios (mantener el mismo HTML que tenías)
     usersContent.innerHTML = `
         <div class="content-header">
             <div class="page-title">
@@ -644,11 +528,10 @@ function loadUsersModule() {
                     <label for="filterRole">Filtrar por Rol</label>
                     <select id="filterRole" class="form-control">
                         <option value="">Todos los roles</option>
-                        <option value="Administrador">Administrador</option>
-                        <option value="Coordinador">Coordinador</option>
-                        <option value="Supervisor">Supervisor</option>
-                        <option value="Técnico">Técnico</option>
-                        <option value="Monitor">Monitor</option>
+                        <option value="administrador">ADMINISTRADOR</option>
+                        <option value="usuario">USUARIO</option>
+                        <option value="visor">VISOR</option>
+                        <option value="editor">EDITOR</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -680,7 +563,6 @@ function loadUsersModule() {
                 <table class="users-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
                             <th>Nombre</th>
                             <th>Email</th>
                             <th>Teléfono</th>
@@ -691,7 +573,7 @@ function loadUsersModule() {
                         </tr>
                     </thead>
                     <tbody id="usersTableBody">
-                        <!-- Los usuarios se cargarán aquí dinámicamente desde la API -->
+                        <!-- Los usuarios se cargarán aquí dinámicamente -->
                     </tbody>
                 </table>
             </div>
@@ -753,6 +635,17 @@ function loadUsersModule() {
                                     <input type="password" id="modalPassword" class="form-control" required>
                                 </div>
                                 <div class="form-group">
+                                    <label for="modalDelegados" class="required">Delegados Territoriales</label>
+                                    <select id="modalDelegados" class="form-control" required>
+                                        <option value="">Seleccione una opción</option>
+                                        <option value="delegado1">Delegado Territorial 1</option>
+                                        <option value="delegado2">Delegado Territorial 2</option>
+                                        <option value="delegado3">Delegado Territorial 3</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
                                     <label for="modalConfirmPassword" id="labelConfirmPassword" class="required">Confirmar Contraseña</label>
                                     <input type="password" id="modalConfirmPassword" class="form-control" required>
                                 </div>
@@ -769,21 +662,19 @@ function loadUsersModule() {
                                     <label for="modalRol" class="required">Rol de Usuario</label>
                                     <select id="modalRol" class="form-control" required>
                                         <option value="">Seleccione un rol</option>
-                                        <option value="Administrador">Administrador</option>
-                                        <option value="Coordinador">Coordinador</option>
-                                        <option value="Supervisor">Supervisor</option>
-                                        <option value="Técnico">Técnico</option>
-                                        <option value="Monitor">Monitor</option>
+                                        <option value="administrador">ADMINISTRADOR</option>
+                                        <option value="usuario">USUARIO</option>
+                                        <option value="visor">VISOR</option>
+                                        <option value="editor">EDITOR</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <label for="modalRegion" class="required">Región Asignada</label>
                                     <select id="modalRegion" class="form-control" required>
                                         <option value="">Seleccione una región</option>
-                                        <option value="Occidental">Occidental</option>
-                                        <option value="Central">Central</option>
-                                        <option value="Paracentral">Paracentral</option>
-                                        <option value="Oriental">Oriental</option>
+                                        <option value="occidental">OCCIDENTAL</option>
+                                        <option value="central">CENTRAL</option>
+                                        <option value="oriental">ORIENTAL</option>
                                     </select>
                                 </div>
                             </div>
@@ -799,29 +690,35 @@ function loadUsersModule() {
                                     <label for="modalDepartamento" class="required">Departamento</label>
                                     <select id="modalDepartamento" class="form-control" required>
                                         <option value="">Seleccione un departamento</option>
+                                        <option value="ahuachapan">AHUACHAPAN</option>
+                                        <option value="santa-ana">SANTA ANA</option>
+                                        <option value="sonsonate">SONSONATE</option>
+                                        <option value="san-salvador">SAN SALVADOR</option>
+                                        <option value="la-libertad">LA LIBERTAD</option>
+                                        <option value="san-miguel">SAN MIGUEL</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <label for="modalMunicipio" class="required">Municipio</label>
-                                    <select id="modalMunicipio" class="form-control" required>
-                                        <option value="">Seleccione un municipio</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-row">
                                 <div class="form-group">
                                     <label for="modalDistrito" class="required">Distrito</label>
                                     <select id="modalDistrito" class="form-control" required>
                                         <option value="">Seleccione un distrito</option>
                                     </select>
                                 </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="modalMunicipio" class="required">Municipio</label>
+                                    <select id="modalMunicipio" class="form-control" required>
+                                        <option value="">Seleccione un municipio</option>
+                                    </select>
+                                </div>
                                 <div class="form-group">
                                     <label for="modalFiltrado">Configuración de Filtrado</label>
                                     <select id="modalFiltrado" class="form-control">
-                                        <option value="No Aplica">NO APLICA</option>
-                                        <option value="Region">FILTRO REGIONAL</option>
-                                        <option value="Departamento">FILTRO DEPARTAMENTAL</option>
-                                        <option value="Municipio">FILTRO MUNICIPAL</option>
+                                        <option value="no-aplica">NO APLICA</option>
+                                        <option value="filtro-regional">FILTRO REGIONAL</option>
+                                        <option value="filtro-departamental">FILTRO DEPARTAMENTAL</option>
+                                        <option value="filtro-municipal">FILTRO MUNICIPAL</option>
                                     </select>
                                 </div>
                             </div>
@@ -853,9 +750,10 @@ function loadUsersModule() {
         </div>
     `;
     
-    // Configurar event listeners específicos del módulo
-    if (typeof usuarioController !== 'undefined') {
-        usuarioController.setupModuleEventListeners();
-        usuarioController.cargarUsuarios();
+    // Inicializar funcionalidad del módulo de usuarios
+    if (typeof initializeUsersModule === 'function') {
+        initializeUsersModule();
+    } else {
+        console.error('initializeUsersModule no está disponible');
     }
 }

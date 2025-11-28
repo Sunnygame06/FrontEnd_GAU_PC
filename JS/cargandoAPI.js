@@ -1,170 +1,273 @@
-class LoadingManager {
-    constructor() {
-        this.maxRetries = 3;
-        this.retryCount = 0;
-        this.retryInterval = 3000; // 3 segundos
-        this.progress = 0;
-        this.init();
-    }
+// Variables globales
+let retryCount = 0;
+let connectionEstablished = false;
 
-    init() {
-        this.checkServerConnection();
-        this.setupEventListeners();
-        this.simulateProgress();
-    }
+// Elementos del DOM
+const statusTitle = document.getElementById('statusTitle');
+const statusMessage = document.getElementById('statusMessage');
+const progressBar = document.getElementById('progressBar');
+const retryContainer = document.getElementById('retryContainer');
+const retryBtn = document.getElementById('retryBtn');
+const offlineBtn = document.getElementById('offlineBtn');
+const step1 = document.getElementById('step1');
+const step2 = document.getElementById('step2');
+const step3 = document.getElementById('step3');
 
-    async checkServerConnection() {
-        try {
-            // Intentar conectar con el endpoint de actividades
-            const response = await fetch('http://localhost:8080/apiActividad/getAllActividades?page=0&size=1', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                timeout: 5000
-            });
-
-            if (response.ok) {
-                this.connectionSuccess();
-            } else {
-                throw new Error(`HTTP ${response.status}`);
-            }
-        } catch (error) {
-            console.error('Error de conexión:', error);
-            this.connectionFailed();
-        }
-    }
-
-    connectionSuccess() {
-        this.updateProgress(100);
-        setTimeout(() => {
-            // Redirigir al dashboard
-            window.location.href = 'dashboard.html';
-        }, 1000);
-    }
-
-    connectionFailed() {
-        this.retryCount++;
-        
-        if (this.retryCount <= this.maxRetries) {
-            this.showRetryMessage();
-            setTimeout(() => {
-                this.hideErrorMessage();
-                this.checkServerConnection();
-            }, this.retryInterval);
-        } else {
-            this.showFinalErrorMessage();
-        }
-    }
-
-    showRetryMessage() {
-        const errorMessage = document.getElementById('errorMessage');
-        const errorText = errorMessage.querySelector('p');
-        errorText.textContent = `No se puede conectar con el servidor. Reintentando... (${this.retryCount}/${this.maxRetries})`;
-        errorMessage.style.display = 'block';
-    }
-
-    showFinalErrorMessage() {
-        const errorMessage = document.getElementById('errorMessage');
-        const errorText = errorMessage.querySelector('p');
-        errorText.textContent = 'No se puede establecer conexión con el servidor en este momento. Por favor, verifique que el servidor esté ejecutándose.';
-        errorMessage.style.display = 'block';
-        this.updateProgress(0);
-    }
-
-    hideErrorMessage() {
-        const errorMessage = document.getElementById('errorMessage');
-        errorMessage.style.display = 'none';
-    }
-
-    simulateProgress() {
-        const interval = setInterval(() => {
-            if (this.progress < 90) {
-                this.progress += Math.random() * 10;
-                this.updateProgress(this.progress);
-            }
-        }, 500);
-    }
-
-    updateProgress(percentage) {
-        this.progress = Math.min(100, Math.max(0, percentage));
-        const progressFill = document.querySelector('.progress-fill');
-        const progressText = document.querySelector('.progress-text');
-        
-        if (progressFill) {
-            progressFill.style.width = `${this.progress}%`;
-        }
-        
-        if (progressText) {
-            progressText.textContent = `${Math.round(this.progress)}%`;
-        }
-
-        // Actualizar iconos de detalles
-        this.updateLoadingDetails(this.progress);
-    }
-
-    updateLoadingDetails(progress) {
-        const details = document.querySelectorAll('.detail-item');
-        
-        details.forEach((detail, index) => {
-            const icon = detail.querySelector('i');
-            const threshold = (index + 1) * 30;
-            
-            if (progress >= threshold) {
-                icon.className = 'fas fa-check-circle';
-                icon.style.color = 'var(--success-color)';
-            } else if (progress >= threshold - 15) {
-                icon.className = 'fas fa-spinner fa-spin';
-                icon.style.color = 'var(--primary-medium)';
-            }
-        });
-    }
-
-    setupEventListeners() {
-        document.getElementById('retryBtn').addEventListener('click', () => {
-            this.retryCount = 0;
-            this.hideErrorMessage();
-            this.updateProgress(0);
-            this.simulateProgress();
-            this.checkServerConnection();
-        });
-
-        document.getElementById('offlineBtn').addEventListener('click', () => {
-            localStorage.setItem('offlineMode', 'true');
-            window.location.href = 'dashboard.html';
-        });
-    }
-}
-
-// Inicializar cuando el DOM esté listo
+// Inicializar verificación al cargar la página
 document.addEventListener('DOMContentLoaded', () => {
-    new LoadingManager();
+    initializeLoading();
 });
 
-// Polyfill para timeout en fetch
-if (!window.fetch) {
-    console.error('Fetch no está soportado en este navegador');
-} else {
-    // Agregar timeout a fetch
-    const originalFetch = window.fetch;
-    window.fetch = function(...args) {
-        const [resource, config = {}] = args;
-        const timeout = config.timeout || 8000;
+// Función principal de inicialización
+async function initializeLoading() {
+    try {
+        // Paso 1: Verificar servidor
+        await updateStep(1, 'active', 'Verificando servidor...');
+        const serverOnline = await checkServerConnection();
+        
+        if (!serverOnline) {
+            throw new Error('Servidor no disponible');
+        }
+        
+        await updateStep(1, 'completed', 'Servidor conectado');
+        await delay(500);
+        
+        // Paso 2: Verificar base de datos
+        await updateStep(2, 'active', 'Conectando a base de datos...');
+        const dbConnected = await checkDatabaseConnection();
+        
+        if (!dbConnected) {
+            throw new Error('Base de datos no disponible');
+        }
+        
+        await updateStep(2, 'completed', 'Base de datos conectada');
+        await delay(500);
+        
+        // Paso 3: Cargar recursos
+        await updateStep(3, 'active', 'Cargando recursos del sistema...');
+        await loadSystemResources();
+        await updateStep(3, 'completed', 'Recursos cargados');
+        
+        // Completar carga
+        await completeLoading();
+        
+    } catch (error) {
+        console.error('Error durante la carga:', error);
+        handleLoadingError(error.message);
+    }
+}
+
+// Verificar conexión con el servidor
+async function checkServerConnection() {
+    try {
+        updateProgress(20);
         
         const controller = new AbortController();
-        const { signal } = controller;
+        const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUT.REQUEST);
         
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
-        
-        return originalFetch(resource, {
-            ...config,
-            signal
-        }).then(response => {
-            clearTimeout(timeoutId);
-            return response;
-        }).catch(error => {
-            clearTimeout(timeoutId);
-            throw error;
+        const response = await fetch(buildURL(CONFIG.ENDPOINTS.USUARIOS.GET_ALL, { page: 0, size: 1 }), {
+            method: 'GET',
+            signal: controller.signal,
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
         });
-    };
+        
+        clearTimeout(timeoutId);
+        updateProgress(40);
+        
+        return response.ok || response.status === 304;
+        
+    } catch (error) {
+        console.error('Error verificando servidor:', error);
+        return false;
+    }
 }
+
+// Verificar conexión con base de datos
+async function checkDatabaseConnection() {
+    try {
+        updateProgress(50);
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUT.REQUEST);
+        
+        // Intentar obtener datos para verificar la BD
+        const response = await fetch(buildURL(CONFIG.ENDPOINTS.ACTIVIDADES.GET_ALL, { page: 0, size: 1 }), {
+            method: 'GET',
+            signal: controller.signal,
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+        
+        clearTimeout(timeoutId);
+        updateProgress(70);
+        
+        return response.ok || response.status === 304;
+        
+    } catch (error) {
+        console.error('Error verificando base de datos:', error);
+        return false;
+    }
+}
+
+// Cargar recursos del sistema
+async function loadSystemResources() {
+    updateProgress(80);
+    
+    // Simular carga de recursos
+    await delay(1000);
+    
+    updateProgress(100);
+}
+
+// Actualizar paso de carga
+async function updateStep(stepNumber, status, message) {
+    const step = document.getElementById(`step${stepNumber}`);
+    const icon = step.querySelector('.step-icon');
+    
+    // Remover clases anteriores
+    step.classList.remove('active', 'completed', 'error');
+    icon.classList.remove('fa-circle-notch', 'fa-spin', 'fa-check-circle', 'fa-circle', 'fa-times-circle');
+    
+    // Aplicar nuevo estado
+    step.classList.add(status);
+    
+    switch(status) {
+        case 'active':
+            icon.classList.add('fa-circle-notch', 'fa-spin');
+            break;
+        case 'completed':
+            icon.classList.add('fa-check-circle');
+            break;
+        case 'error':
+            icon.classList.add('fa-times-circle');
+            break;
+        default:
+            icon.classList.add('fa-circle');
+    }
+    
+    if (message) {
+        statusMessage.textContent = message;
+    }
+}
+
+// Actualizar barra de progreso
+function updateProgress(percentage) {
+    progressBar.style.width = percentage + '%';
+}
+
+// Completar proceso de carga
+async function completeLoading() {
+    connectionEstablished = true;
+    
+    statusTitle.textContent = '¡Conexión Exitosa!';
+    statusMessage.textContent = 'Redirigiendo al sistema...';
+    
+    // Esperar un momento antes de redirigir
+    await delay(1500);
+    
+    // Verificar si el usuario ya está autenticado
+    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+    
+    if (isAuthenticated) {
+        window.location.href = 'dashboard.html';
+    } else {
+        window.location.href = 'index.html';
+    }
+}
+
+// Manejar errores de carga
+function handleLoadingError(errorMessage) {
+    // Marcar paso actual como error
+    if (step1.classList.contains('active')) {
+        updateStep(1, 'error', 'Error al conectar con el servidor');
+    } else if (step2.classList.contains('active')) {
+        updateStep(2, 'error', 'Error al conectar con la base de datos');
+    } else if (step3.classList.contains('active')) {
+        updateStep(3, 'error', 'Error al cargar recursos');
+    }
+    
+    statusTitle.textContent = 'Error de Conexión';
+    statusMessage.textContent = errorMessage || CONFIG.MESSAGES.CONNECTION_ERROR;
+    
+    // Mostrar opciones de reintento
+    retryContainer.style.display = 'flex';
+    
+    // Detener animación de progreso
+    progressBar.style.animation = 'none';
+}
+
+// Reintentar conexión
+retryBtn.addEventListener('click', async () => {
+    retryCount++;
+    
+    if (retryCount > CONFIG.RETRY.MAX_ATTEMPTS) {
+        Swal.fire({
+            title: 'Demasiados Intentos',
+            text: 'Has excedido el número máximo de intentos. Por favor, verifica tu conexión y el servidor.',
+            icon: 'error',
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#2d3748'
+        });
+        return;
+    }
+    
+    // Ocultar botones de reintento
+    retryContainer.style.display = 'none';
+    
+    // Reiniciar estados
+    step1.classList.remove('completed', 'error');
+    step2.classList.remove('active', 'completed', 'error');
+    step3.classList.remove('active', 'completed', 'error');
+    
+    progressBar.style.width = '0%';
+    progressBar.style.animation = 'progress 2s ease-in-out infinite';
+    
+    statusTitle.textContent = 'Reintentando Conexión...';
+    statusMessage.textContent = `Intento ${retryCount} de ${CONFIG.RETRY.MAX_ATTEMPTS}`;
+    
+    // Esperar antes de reintentar
+    await delay(CONFIG.RETRY.DELAY);
+    
+    // Reiniciar proceso
+    initializeLoading();
+});
+
+// Trabajar sin conexión
+offlineBtn.addEventListener('click', () => {
+    Swal.fire({
+        title: 'Modo Sin Conexión',
+        html: `
+            <p>El modo sin conexión no está disponible actualmente.</p>
+            <p>Por favor, verifica:</p>
+            <ul style="text-align: left; margin: 20px 40px;">
+                <li>Que el servidor esté ejecutándose en el puerto 8080</li>
+                <li>Tu conexión a internet</li>
+                <li>La configuración del firewall</li>
+            </ul>
+        `,
+        icon: 'info',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#2d3748'
+    });
+});
+
+// Función de utilidad para delay
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Prevenir navegación hacia atrás durante la carga
+window.addEventListener('popstate', (e) => {
+    if (!connectionEstablished) {
+        e.preventDefault();
+        window.history.pushState(null, '', window.location.href);
+    }
+});
+
+// Agregar estado inicial al historial
+window.history.pushState(null, '', window.location.href);

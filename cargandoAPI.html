@@ -3,79 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conectando... | Protección Civil</title>
-    <link rel="stylesheet" href="css/cargandoAPI.css">
+    <title>Cargando | Protección Civil</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="CSS/cargandoAPI.css">
 </head>
 <body>
+    <div class="background-animation">
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+    </div>
+
     <div class="loading-container">
-        <div class="loading-header">
-            <div class="header-with-logo">
-                <div class="logo-container">
-                    <img src="https://www.proteccioncivil.gob.sv/wp-content/uploads/2009/06/procivil-png-peque-1.png" alt="Protección Civil">
-                </div>
-                <h1>PROTECCIÓN CIVIL</h1>
+        <div class="logo-section">
+            <div class="logo-wrapper">
+                <img src="https://www.proteccioncivil.gob.sv/wp-content/uploads/2009/06/procivil-png-peque-1.png" alt="Protección Civil" class="logo">
             </div>
-            <p>Sistema de Gestión Integral</p>
+            <h1 class="system-title">PROTECCIÓN CIVIL</h1>
+            <p class="system-subtitle">Sistema de Gestión Integral</p>
         </div>
-        
+
         <div class="loading-content">
-            <div class="loading-animation">
-                <div class="shield-container">
-                    <div class="shield">
-                        <i class="fas fa-shield-alt"></i>
+            <div class="spinner-container">
+                <div class="spinner">
+                    <div class="double-bounce1"></div>
+                    <div class="double-bounce2"></div>
+                </div>
+            </div>
+
+            <div class="status-container">
+                <h2 class="status-title" id="statusTitle">Verificando Conexión...</h2>
+                <p class="status-message" id="statusMessage">Por favor espere mientras verificamos el servidor</p>
+                
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+
+                <div class="loading-steps">
+                    <div class="step" id="step1">
+                        <i class="fas fa-circle-notch fa-spin step-icon"></i>
+                        <span class="step-text">Verificando servidor</span>
                     </div>
-                    <div class="pulse-ring"></div>
-                    <div class="pulse-ring delay-1"></div>
-                    <div class="pulse-ring delay-2"></div>
+                    <div class="step" id="step2">
+                        <i class="fas fa-circle step-icon"></i>
+                        <span class="step-text">Conectando a base de datos</span>
+                    </div>
+                    <div class="step" id="step3">
+                        <i class="fas fa-circle step-icon"></i>
+                        <span class="step-text">Cargando recursos</span>
+                    </div>
                 </div>
             </div>
-            
-            <h2>Conectando con el servidor</h2>
-            <p>Estableciendo conexión con el sistema...</p>
-            
-            <div class="progress-container">
-                <div class="progress-bar">
-                    <div class="progress-fill"></div>
-                </div>
-                <div class="progress-text">0%</div>
-            </div>
-            
-            <div class="loading-details">
-                <div class="detail-item">
-                    <i class="fas fa-server"></i>
-                    <span>Verificando servidor backend</span>
-                </div>
-                <div class="detail-item">
-                    <i class="fas fa-database"></i>
-                    <span>Conectando con base de datos</span>
-                </div>
-                <div class="detail-item">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Cargando módulos del sistema</span>
-                </div>
+
+            <div class="retry-container" id="retryContainer" style="display: none;">
+                <button class="retry-btn" id="retryBtn">
+                    <i class="fas fa-redo-alt"></i>
+                    Reintentar Conexión
+                </button>
             </div>
         </div>
-        
-        <div class="error-message" id="errorMessage" style="display: none;">
-            <div class="error-icon">
-                <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <h3>Servidor no disponible</h3>
-            <p>No se puede establecer conexión con el servidor en este momento.</p>
-            <div class="error-actions">
-                <button class="btn btn-retry" id="retryBtn">
-                    <i class="fas fa-redo"></i>
-                    Reintentar conexión
-                </button>
-                <button class="btn btn-offline" id="offlineBtn">
-                    <i class="fas fa-eye"></i>
-                    Ver en modo offline
-                </button>
-            </div>
+
+        <div class="footer-info">
+            <p class="version-info">Versión 1.0.0</p>
+            <p class="copyright">© 2025 Protección Civil - Todos los derechos reservados</p>
         </div>
     </div>
 
-    <script src="js/cargandoAPI.js"></script>
+    <script src="JS/config.js"></script>
+    <script src="JS/cargandoAPI.js"></script>
 </body>
 </html>

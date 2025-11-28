@@ -1,305 +1,274 @@
-class UsuarioService {
-    constructor() {
-        this.baseURL = 'http://localhost:8080/apiUsuario';
-        this.offlineMode = localStorage.getItem('offlineMode') === 'true';
-    }
-
-    // Obtener todos los usuarios con paginación
+// Servicio para gestión de usuarios
+const UsuarioService = {
+    
+    /**
+     * Obtener todos los usuarios con paginación
+     * @param {number} page - Número de página (default: 0)
+     * @param {number} size - Tamaño de página (default: 10)
+     * @returns {Promise} Promesa con los datos de usuarios
+     */
     async getAllUsuarios(page = 0, size = 10) {
-        if (this.offlineMode) {
-            return this.getOfflineUsers(page, size);
-        }
-
         try {
-            const response = await fetch(`${this.baseURL}/getAllUsuarios?page=${page}&size=${size}`);
+            const url = buildURL(CONFIG.ENDPOINTS.USUARIOS.GET_ALL, { page, size });
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+            
             if (!response.ok) {
-                throw new Error(`Error ${response.status}: ${response.statusText}`);
+                throw new Error(`Error HTTP: ${response.status}`);
             }
+            
             const data = await response.json();
-            return this.normalizeApiResponse(data);
+            return data;
+            
         } catch (error) {
             console.error('Error al obtener usuarios:', error);
             throw error;
         }
-    }
-
-    // Crear nuevo usuario
-    async createUsuario(usuarioData) {
-        if (this.offlineMode) {
-            return this.createOfflineUser(usuarioData);
-        }
-
+    },
+    
+    /**
+     * Obtener usuario por ID
+     * @param {number} id - ID del usuario
+     * @returns {Promise} Promesa con los datos del usuario
+     */
+    async getUsuarioById(id) {
         try {
-            const dto = this.convertirFormDataADTO(usuarioData);
-            const response = await fetch(`${this.baseURL}/newUsuario`, {
+            const url = `${CONFIG.API_BASE_URL}${CONFIG.ENDPOINTS.USUARIOS.GET_BY_ID}/${id}`;
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            return data;
+            
+        } catch (error) {
+            console.error('Error al obtener usuario:', error);
+            throw error;
+        }
+    },
+    
+    /**
+     * Crear nuevo usuario
+     * @param {Object} usuarioData - Datos del usuario
+     * @returns {Promise} Promesa con el usuario creado
+     */
+    async createUsuario(usuarioData) {
+        try {
+            const url = `${CONFIG.API_BASE_URL}${CONFIG.ENDPOINTS.USUARIOS.CREATE}`;
+            
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 },
-                body: JSON.stringify(dto)
+                body: JSON.stringify(usuarioData)
             });
-
+            
             if (!response.ok) {
-                throw new Error(`Error ${response.status}: ${response.statusText}`);
+                const errorData = await response.json();
+                throw new Error(errorData.message || `Error HTTP: ${response.status}`);
             }
-            return await response.json();
+            
+            const data = await response.json();
+            return data;
+            
         } catch (error) {
             console.error('Error al crear usuario:', error);
             throw error;
         }
-    }
-
-    // Actualizar usuario existente
+    },
+    
+    /**
+     * Actualizar usuario existente
+     * @param {number} id - ID del usuario
+     * @param {Object} usuarioData - Datos actualizados del usuario
+     * @returns {Promise} Promesa con el usuario actualizado
+     */
     async updateUsuario(id, usuarioData) {
-        if (this.offlineMode) {
-            return this.updateOfflineUser(id, usuarioData);
-        }
-
         try {
-            const dto = this.convertirFormDataADTO(usuarioData);
-            const response = await fetch(`${this.baseURL}/updateUsuario/${id}`, {
+            const url = `${CONFIG.API_BASE_URL}${CONFIG.ENDPOINTS.USUARIOS.UPDATE}/${id}`;
+            
+            const response = await fetch(url, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 },
-                body: JSON.stringify(dto)
+                body: JSON.stringify(usuarioData)
             });
-
+            
             if (!response.ok) {
-                throw new Error(`Error ${response.status}: ${response.statusText}`);
+                const errorData = await response.json();
+                throw new Error(errorData.message || `Error HTTP: ${response.status}`);
             }
-            return await response.json();
+            
+            const data = await response.json();
+            return data;
+            
         } catch (error) {
             console.error('Error al actualizar usuario:', error);
             throw error;
         }
-    }
-
-    // Eliminar usuario
+    },
+    
+    /**
+     * Eliminar usuario
+     * @param {number} id - ID del usuario
+     * @returns {Promise} Promesa con resultado de eliminación
+     */
     async deleteUsuario(id) {
-        if (this.offlineMode) {
-            return this.deleteOfflineUser(id);
-        }
-
         try {
-            const response = await fetch(`${this.baseURL}/deleteUsuario/${id}`, {
-                method: 'DELETE'
+            const url = `${CONFIG.API_BASE_URL}${CONFIG.ENDPOINTS.USUARIOS.DELETE}/${id}`;
+            
+            const response = await fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
             });
-
+            
             if (!response.ok) {
-                throw new Error(`Error ${response.status}: ${response.statusText}`);
+                const errorData = await response.json();
+                throw new Error(errorData.message || `Error HTTP: ${response.status}`);
             }
-            return await response.json();
+            
+            const data = await response.json();
+            return data;
+            
         } catch (error) {
             console.error('Error al eliminar usuario:', error);
             throw error;
         }
-    }
-
-    // Normalizar respuesta de la API
-    normalizeApiResponse(apiResponse) {
-        // Si la API retorna un objeto con content (Spring Page)
-        if (apiResponse.content) {
-            return {
-                content: apiResponse.content,
-                totalElements: apiResponse.totalElements,
-                totalPages: apiResponse.totalPages,
-                size: apiResponse.size,
-                number: apiResponse.number
-            };
-        }
-        
-        // Si retorna un array directamente
-        if (Array.isArray(apiResponse)) {
-            return {
-                content: apiResponse,
-                totalElements: apiResponse.length,
-                totalPages: Math.ceil(apiResponse.length / 10),
-                size: 10,
-                number: 0
-            };
-        }
-        
-        return apiResponse;
-    }
-
-    // Convertir datos del formulario al formato DTO
-    convertirFormDataADTO(formData) {
-        return {
-            nombre: formData.nombres,
-            telefono: formData.telefono,
-            email: formData.email,
-            unidad: formData.unidad,
-            pass: formData.password,
-            rol: formData.rol,
-            region: formData.region,
-            departamento: formData.departamento,
-            municipio: formData.municipio,
-            distrito: formData.distrito,
-            filtrar: formData.filtrado || 'No Aplica'
-        };
-    }
-
-    // Convertir DTO a datos del formulario
-    convertirDTOAFormData(usuarioDTO) {
-        return {
-            id: usuarioDTO.Id,
-            nombres: usuarioDTO.nombre,
-            telefono: usuarioDTO.telefono,
-            email: usuarioDTO.email,
-            unidad: usuarioDTO.unidad,
-            rol: usuarioDTO.rol,
-            region: usuarioDTO.region,
-            departamento: usuarioDTO.departamento,
-            municipio: usuarioDTO.municipio,
-            distrito: usuarioDTO.distrito,
-            filtrado: usuarioDTO.filtrar || 'No Aplica'
-        };
-    }
-
-    // ============================
-    // MODO OFFLINE
-    // ============================
-
-    getOfflineUsers(page = 0, size = 10) {
-        const usuarios = this.getStoredUsers();
-        const startIndex = page * size;
-        const endIndex = startIndex + size;
-        const paginatedUsers = usuarios.slice(startIndex, endIndex);
-
-        return {
-            content: paginatedUsers,
-            totalElements: usuarios.length,
-            totalPages: Math.ceil(usuarios.length / size),
-            size: size,
-            number: page
-        };
-    }
-
-    createOfflineUser(usuarioData) {
-        const usuarios = this.getStoredUsers();
-        const nuevoId = Math.max(...usuarios.map(u => u.Id), 0) + 1;
-        
-        const nuevoUsuario = {
-            Id: nuevoId,
-            ...usuarioData,
-            fechaCreacion: new Date().toISOString().split('T')[0],
-            estado: 'activo'
-        };
-        
-        usuarios.push(nuevoUsuario);
-        this.saveUsers(usuarios);
-        
-        return {
-            status: 'Completado',
-            data: nuevoUsuario
-        };
-    }
-
-    updateOfflineUser(id, usuarioData) {
-        const usuarios = this.getStoredUsers();
-        const index = usuarios.findIndex(u => u.Id === parseInt(id));
-        
-        if (index !== -1) {
-            usuarios[index] = { ...usuarios[index], ...usuarioData };
-            this.saveUsers(usuarios);
-            return usuarios[index];
-        }
-        
-        throw new Error('Usuario no encontrado');
-    }
-
-    deleteOfflineUser(id) {
-        const usuarios = this.getStoredUsers();
-        const filtered = usuarios.filter(u => u.Id !== parseInt(id));
-        
-        if (filtered.length < usuarios.length) {
-            this.saveUsers(filtered);
-            return {
-                status: 'Completado',
-                message: 'Usuario eliminado correctamente'
-            };
-        }
-        
-        throw new Error('Usuario no encontrado');
-    }
-
-    getStoredUsers() {
-        const stored = localStorage.getItem('offlineUsers');
-        if (stored) {
-            return JSON.parse(stored);
-        }
-        
-        // Datos de ejemplo si no hay datos guardados
-        const defaultUsers = [
-            {
-                Id: 1,
-                nombre: "Juan Pérez García",
-                email: "juan.perez@proteccioncivil.gob.sv",
-                telefono: "1234-5678",
-                rol: "Administrador",
-                region: "Central",
-                departamento: "SAN SALVADOR",
-                municipio: "SAN SALVADOR",
-                distrito: "SAN SALVADOR",
-                estado: "activo",
-                unidad: "Unidad Central",
-                fechaCreacion: "2024-01-15",
-                filtrar: "No Aplica"
-            },
-            {
-                Id: 2,
-                nombre: "María Rodríguez López",
-                email: "maria.rodriguez@proteccioncivil.gob.sv",
-                telefono: "2345-6789",
-                rol: "Coordinador",
-                region: "Paracentral",
-                departamento: "LA PAZ",
-                municipio: "ZACATECOLUCA",
-                distrito: "ZACATECOLUCA",
-                estado: "activo",
-                unidad: "Unidad Regional",
-                fechaCreacion: "2024-02-20",
-                filtrar: "Region"
-            },
-            {
-                Id: 3,
-                nombre: "Carlos Hernández Martínez",
-                email: "carlos.hernandez@proteccioncivil.gob.sv",
-                telefono: "3456-7890",
-                rol: "Técnico",
-                region: "Oriental",
-                departamento: "SAN MIGUEL",
-                municipio: "SAN MIGUEL",
-                distrito: "SAN MIGUEL",
-                estado: "inactivo",
-                unidad: "Unidad Técnica",
-                fechaCreacion: "2024-03-10",
-                filtrar: "Departamento"
-            }
-        ];
-        
-        this.saveUsers(defaultUsers);
-        return defaultUsers;
-    }
-
-    saveUsers(usuarios) {
-        localStorage.setItem('offlineUsers', JSON.stringify(usuarios));
-    }
-
-    // Verificar conexión con el servidor
-    async checkConnection() {
+    },
+    
+    /**
+     * Buscar usuarios por término
+     * @param {string} searchTerm - Término de búsqueda
+     * @param {number} page - Número de página
+     * @param {number} size - Tamaño de página
+     * @returns {Promise} Promesa con resultados de búsqueda
+     */
+    async searchUsuarios(searchTerm, page = 0, size = 10) {
         try {
-            const response = await fetch(`${this.baseURL}/getAllUsuarios?page=0&size=1`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                timeout: 5000
-            });
-            return response.ok;
+            // Primero obtener todos los usuarios
+            const allData = await this.getAllUsuarios(page, size);
+            
+            // Filtrar localmente (si el backend no tiene endpoint de búsqueda)
+            if (searchTerm && searchTerm.trim() !== '') {
+                const term = searchTerm.toLowerCase();
+                const filteredContent = allData.content.filter(usuario => 
+                    usuario.nombre.toLowerCase().includes(term) ||
+                    usuario.email.toLowerCase().includes(term) ||
+                    usuario.telefono.includes(term)
+                );
+                
+                return {
+                    ...allData,
+                    content: filteredContent,
+                    totalElements: filteredContent.length
+                };
+            }
+            
+            return allData;
+            
         } catch (error) {
-            return false;
+            console.error('Error al buscar usuarios:', error);
+            throw error;
         }
+    },
+    
+    /**
+     * Validar datos de usuario
+     * @param {Object} usuarioData - Datos a validar
+     * @returns {Object} Objeto con validación y errores
+     */
+    validateUsuario(usuarioData) {
+        const errors = {};
+        
+        // Validar nombre
+        if (!usuarioData.nombre || usuarioData.nombre.trim() === '') {
+            errors.nombre = 'El nombre es requerido';
+        } else if (usuarioData.nombre.length > 200) {
+            errors.nombre = 'El nombre no puede exceder 200 caracteres';
+        }
+        
+        // Validar teléfono
+        if (!usuarioData.telefono || usuarioData.telefono.trim() === '') {
+            errors.telefono = 'El teléfono es requerido';
+        } else if (usuarioData.telefono.length > 9) {
+            errors.telefono = 'El teléfono no puede exceder 9 caracteres';
+        }
+        
+        // Validar email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!usuarioData.email || usuarioData.email.trim() === '') {
+            errors.email = 'El email es requerido';
+        } else if (!emailRegex.test(usuarioData.email)) {
+            errors.email = 'El formato del email no es válido';
+        } else if (usuarioData.email.length > 200) {
+            errors.email = 'El email no puede exceder 200 caracteres';
+        }
+        
+        // Validar unidad
+        if (!usuarioData.unidad || usuarioData.unidad.trim() === '') {
+            errors.unidad = 'La unidad es requerida';
+        }
+        
+        // Validar contraseña (solo para nuevos usuarios)
+        if (!usuarioData.Id && (!usuarioData.pass || usuarioData.pass.trim() === '')) {
+            errors.pass = 'La contraseña es requerida';
+        }
+        
+        // Validar rol
+        if (!usuarioData.rol || usuarioData.rol.trim() === '') {
+            errors.rol = 'El rol es requerido';
+        }
+        
+        // Validar región
+        if (!usuarioData.region || usuarioData.region.trim() === '') {
+            errors.region = 'La región es requerida';
+        }
+        
+        // Validar departamento
+        if (!usuarioData.departamento || usuarioData.departamento.trim() === '') {
+            errors.departamento = 'El departamento es requerido';
+        }
+        
+        // Validar municipio
+        if (!usuarioData.municipio || usuarioData.municipio.trim() === '') {
+            errors.municipio = 'El municipio es requerido';
+        }
+        
+        // Validar distrito
+        if (!usuarioData.distrito || usuarioData.distrito.trim() === '') {
+            errors.distrito = 'El distrito es requerido';
+        }
+        
+        return {
+            isValid: Object.keys(errors).length === 0,
+            errors
+        };
     }
+};
+
+// Exportar el servicio
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = UsuarioService;
 }
